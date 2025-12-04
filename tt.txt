@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TOKYO TRIP</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#e5e5e5">
+
+    <!-- 圖示 -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231c1917'/%3E%3Ctext x='50' y='55' font-size='50' text-anchor='middle' dominant-baseline='middle' fill='%23f97316'%3E✈️%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231c1917'/%3E%3Ctext x='50' y='55' font-size='50' text-anchor='middle' dominant-baseline='middle' fill='%23f97316'%3E✈️%3C/text%3E%3C/svg%3E">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
+
+        body { 
+            font-family: 'Barlow', 'Noto Sans TC', sans-serif;
+            background-color: #e5e5e5; 
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+            color: #1c1917;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; position: relative; background-color: transparent; }
+        ::-webkit-scrollbar { display: none; }
+
+        /* 卡片風格 */
+        .card-marble {
+            background-color: #ffffff;
+            border: 3px solid #1c1917;
+            border-radius: 20px;
+            box-shadow: 6px 6px 0px #1c1917;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .card-marble:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #1c1917; }
+
+        /* 首頁選單 */
+        .menu-icon {
+            display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 1.2rem; height: 130px; position: relative; overflow: hidden;
+        }
+        .menu-icon i { width: 28px; height: 28px; margin-bottom: 8px; color: #1c1917; stroke-width: 2.5px; }
+        .menu-icon span { font-weight: 900; text-transform: uppercase; font-size: 1.1rem; letter-spacing: 0.5px; line-height: 1; }
+        .menu-icon .subtitle { font-size: 0.7rem; font-weight: 700; color: #78716c; margin-top: 4px; }
+
+        /* 頁面切換動畫 */
+        .hidden-view { display: none; }
+        .active-view { display: block; animation: slideIn 0.2s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: 0; } }
+
+        /* 時間軸 */
+        .timeline-line { position: absolute; left: 23px; top: 24px; bottom: -10px; width: 3px; background: #d6d3d1; z-index: 0; }
+        .timeline-dot { position: absolute; left: 15px; top: 24px; width: 19px; height: 19px; background: #1c1917; border: 3px solid #f97316; border-radius: 50%; z-index: 10; }
+
+        /* FAB (全域計算機) */
+        .fab-calc {
+            position: fixed; bottom: 100px; right: 20px; width: 64px; height: 64px; border-radius: 50%;
+            background: #f97316; border: 3px solid #1c1917; color: white;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 4px 4px 0px #1c1917; z-index: 50; transition: transform 0.1s;
+        }
+        .fab-calc:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #1c1917; }
+
+        /* 統一的底部長按鈕容器 */
+        .fixed-bottom-btn-container {
+            position: fixed; bottom: 90px; left: 0; right: 0; z-index: 40;
+            display: flex; justify-content: center; pointer-events: none;
+        }
+
+        /* Header & Nav */
+        .header-bar { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; }
+        .back-btn { width: 40px; height: 40px; border: 2px solid #1c1917; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0px #1c1917; }
+        
+        .date-tab { flex-shrink: 0; width: 60px; height: 64px; border: 2px solid #1c1917; background: white; color: #1c1917; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; cursor: pointer; transition: all 0.2s; box-shadow: 3px 3px 0px #a8a29e; border-radius: 12px; }
+        .date-tab.active { background: #1c1917; color: #f97316; box-shadow: 3px 3px 0px #f97316; transform: translate(-1px, -1px); }
+        
+        .checkbox-industrial { appearance: none; width: 24px; height: 24px; border: 2px solid #1c1917; background: white; display: grid; place-content: center; cursor: pointer; }
+        .checkbox-industrial::before { content: ""; width: 14px; height: 14px; transform: scale(0); transition: 0.1s transform ease-in-out; box-shadow: inset 14px 14px #f97316; }
+        .checkbox-industrial:checked::before { transform: scale(1); }
+        
+        dialog { border-radius: 24px; border: none; padding: 0; background: transparent; width: 90%; max-width: 400px; }
+        dialog::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(3px); }
+        
+        .pet-frame { 
+            position: relative; overflow: hidden; background-size: cover; background-position: center; transition: background-image 0.5s ease-in-out;
+        }
+        .pet-frame::after { 
+            content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); 
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container p-4">
+    
+    <!-- ==================== 0. 首頁 ==================== -->
+    <div id="view-home" class="active-view">
+        <header class="mb-6 mt-4 flex justify-between items-start">
+            <div>
+                <div class="text-xs font-black tracking-[0.2em] text-orange-600 mb-1">TRAVEL PLANNER</div>
+                <h1 class="text-5xl font-black text-stone-900 tracking-tighter italic">TOKYO<span class="text-orange-500">.</span></h1>
+                <div class="flex items-center mt-2 text-xs font-bold text-stone-500">
+                    <div id="auth-status-dot" class="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
+                    <span id="auth-status-text">Waiting for Config...</span>
+                </div>
+            </div>
+            <!-- 首頁計算機 -->
+            <button onclick="app.openCalculator()" style="width:56px; height:56px; background:#f97316; color:white; border:2px solid #1c1917; border-radius:16px; box-shadow:3px 3px 0 #1c1917; display:flex; align-items:center; justify-content:center;" class="active:translate-y-1 active:shadow-none transition-all">
+                <i data-lucide="calculator" class="w-7 h-7"></i>
+            </button>
+        </header>
+
+        <div class="grid grid-cols-2 gap-4">
+            <!-- 行程 -->
+            <button onclick="app.switchView('itinerary')" class="card-marble col-span-2 flex flex-row gap-4 items-center p-6 h-40 bg-stone-50 hover:bg-stone-100 relative overflow-hidden">
+                <div class="bg-stone-900 text-white p-4 rounded-full border-2 border-stone-900 z-10 w-16 h-16 flex items-center justify-center mb-4">
+                    <i data-lucide="map" class="w-8 h-8 !text-white !m-0"></i>
+                </div>
+                <div class="flex-grow text-left z-10">
+                    <span class="block text-4xl font-black tracking-tighter text-stone-900">ITINERARY</span>
+                </div>
+                <i data-lucide="arrow-right" class="w-8 h-8 z-10 text-stone-900 absolute bottom-6 right-6"></i>
+                <div class="absolute -right-10 -top-10 w-48 h-48 bg-orange-500 rounded-full opacity-10 z-0"></div>
+            </button>
+
+            <!-- 記帳 -->
+            <button onclick="app.switchView('budget')" class="card-marble menu-icon hover:bg-orange-50 bg-white">
+                <i data-lucide="wallet"></i>
+                <span class="text-stone-900">BUDGET</span>
+                <div class="subtitle">記帳本</div>
+            </button>
+
+            <!-- 行李 -->
+            <button onclick="app.switchView('packing')" class="card-marble menu-icon hover:bg-blue-50 bg-white">
+                <i data-lucide="luggage"></i>
+                <span class="text-stone-900">PACKING</span>
+                <div class="subtitle">行李清單</div>
+            </button>
+
+            <!-- 伴手禮 -->
+            <button onclick="app.switchView('souvenir')" class="card-marble menu-icon hover:bg-pink-50 bg-white">
+                <i data-lucide="gift"></i>
+                <span class="text-stone-900">GIFT</span>
+                <div class="subtitle">必買清單</div>
+            </button>
+            
+            <!-- 寵物相框 -->
+            <div id="pet-frame" class="card-marble menu-icon pet-frame p-0 border-dashed border-stone-400 bg-stone-200">
+                <div class="absolute bottom-3 left-3 text-white font-bold text-xs z-10 flex items-center drop-shadow-md">
+                    <i data-lucide="heart" class="w-3 h-3 mr-1 fill-orange-500 text-orange-500"></i> My Pets
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 1. 行程 ==================== -->
+    <div id="view-itinerary" class="hidden-view">
+        <div class="header-bar sticky top-0 bg-[#e5e5e5] z-20 pt-2">
+            <button onclick="app.goHome()" class="back-btn"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+            <h2 class="font-black text-2xl tracking-tight text-stone-900">ITINERARY</h2>
+            <div class="flex gap-2 bg-white/80 backdrop-blur p-1.5 rounded-2xl border-2 border-stone-200">
+                <button onclick="app.switchView('packing')" style="width:40px; height:40px; border-radius:12px; border:2px solid #e5e7eb; background:white; color:#a8a29e; display:flex; align-items:center; justify-content:center;"><i data-lucide="luggage" class="w-5 h-5"></i></button>
+                <button onclick="app.switchView('budget')" style="width:40px; height:40px; border-radius:12px; border:2px solid #e5e7eb; background:white; color:#a8a29e; display:flex; align-items:center; justify-content:center;"><i data-lucide="wallet" class="w-5 h-5"></i></button>
+                <button onclick="app.switchView('souvenir')" style="width:40px; height:40px; border-radius:12px; border:2px solid #e5e7eb; background:white; color:#a8a29e; display:flex; align-items:center; justify-content:center;"><i data-lucide="gift" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+
+        <div id="nav-dates" class="flex overflow-x-auto gap-3 pb-4 mb-2"></div>
+
+        <!-- ToDo -->
+        <div id="section-todo" class="hidden">
+            <div class="card-marble bg-white p-4 mb-4 border-l-8 border-l-orange-400">
+                <div class="flex justify-between items-center mb-4 border-b-2 border-stone-100 pb-2">
+                    <h3 class="font-black text-xl text-stone-900">CHECKLIST</h3>
+                    <span class="text-xs font-bold bg-stone-100 text-stone-500 px-2 py-1 rounded">PRE-TRIP</span>
+                </div>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="todo-input" placeholder="新增待辦..." class="flex-grow bg-stone-50 border-2 border-stone-200 focus:border-stone-900 rounded-lg px-3 py-2 font-bold outline-none text-sm">
+                    <button onclick="app.addTodoFromInput()" class="w-10 h-10 bg-stone-900 text-white rounded-lg flex items-center justify-center shadow-lg"><i data-lucide="plus" class="w-5 h-5"></i></button>
+                </div>
+                <div id="list-todo" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <div id="section-itinerary">
+            <div id="list-itinerary" class="pb-32 pl-2 relative space-y-6 min-h-[300px]"></div>
+        </div>
+        
+        <!-- 底部大按鈕 -->
+        <div class="fixed-bottom-btn-container" id="btn-itin-add-container">
+             <button onclick="app.openItineraryModal()" style="width:90%; max-width:460px; padding:16px; border-radius:50px; background:#f97316; color:white; font-weight:900; font-size:18px; border:3px solid #1c1917; box-shadow:0 4px 6px -1px rgba(249,115,22,0.3); display:flex; justify-content:center; align-items:center; gap:8px; pointer-events:auto; cursor:pointer;" class="active:scale-95 transition-transform">
+                <i data-lucide="plus-circle" class="w-6 h-6"></i> 新增行程
+             </button>
+        </div>
+    </div>
+
+    <!-- ==================== 2. 行李 ==================== -->
+    <div id="view-packing" class="hidden-view">
+        <div class="header-bar sticky top-0 bg-[#e5e5e5] z-20 pt-2">
+            <button onclick="app.goHome()" class="back-btn"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+            <h2 class="font-black text-2xl tracking-tight text-stone-900">PACKING</h2>
+            <div class="flex gap-2 bg-white/80 backdrop-blur p-1.5 rounded-2xl border-2 border-stone-200">
+                <button onclick="app.switchView('itinerary')" style="width:40px; height:40px; border-radius:12px; border:2px solid #e5e7eb; background:white; color:#a8a29e; display:flex; align-items:center; justify-content:center;"><i data-lucide="map" class="w-5 h-5"></i></button>
+                <button onclick="app.switchView('budget')" style="width:40px; height:40px; border-radius:12px; border:2px solid #e5e7eb; background:white; color:#a8a29e; display:flex; align-items:center; justify-content:center;"><i data-lucide="wallet" class="w-5 h-5"></i></button>
+                <button onclick="app.switchView('souvenir')" style="width:40px; height:40px; border-radius:12px; border:2px solid #e5e7eb; background:white; color:#a8a29e; display:flex; align-items:center; justify-content:center;"><i data-lucide="gift" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+        <div id="packing-container" class="space-y-6 pb-32"></div>
+
+        <div class="fixed-bottom-btn-container">
+             <button onclick="document.getElementById('dialog-packing').showModal()" style="width:90%; max-width:460px; padding:16px; border-radius:50px; background:#1c1917; color:white; font-weight:900; font-size:18px; border:3px solid #1c1917; box-shadow:0 4px 6px -1px rgba(0,0,0,0.3); display:flex; justify-content:center; align-items:center; gap:8px; pointer-events:auto; cursor:pointer;" class="active:scale-95 transition-transform">
+                <i data-lucide="package-plus" class="w-5 h-5"></i> 新增物品
+             </button>
+        </div>
+    </div>
+
+    <!-- ==================== 3. 記帳 ==================== -->
+    <div id="view-budget" class="hidden-view">
+        <div class="header-bar sticky top-0 bg-[#e5e5e5] z-20 pt-2">
+            <button onclick="app.goHome()" class="back-btn"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+            <h2 class="font-black text-2xl tracking-tight text-stone-900">EXPENSES</h2>
+            <div class="flex gap-2 bg-white/80 backdrop-blur p-1.5 rounded-2xl border-2 border-stone-200">
+                <button onclick="app.switchView('itinerary')" style="width:40px; height:40px; border-radius:12px; border:2px solid #e5e7eb; background:white; color:#a8a29e; display:flex; align-items:center; justify-content:center;"><i data-lucide="map" class="w-5 h-5"></i></button>
+                <button onclick="app.switchView('packing')" style="width:40px; height:40px; border-radius:12px; border:2px solid #e5e7eb; background:white; color:#a8a29e; display:flex; align-items:center; justify-content:center;"><i data-lucide="luggage" class="w-5 h-5"></i></button>
+                <button onclick="app.switchView('souvenir')" style="width:40px; height:40px; border-radius:12px; border:2px solid #e5e7eb; background:white; color:#a8a29e; display:flex; align-items:center; justify-content:center;"><i data-lucide="gift" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+
+        <div class="card-marble bg-stone-900 p-5 mb-6 text-white border-stone-900">
+            <div class="flex justify-between items-start">
+                <div>
+                    <div class="text-xs font-bold text-stone-400 mb-1 uppercase tracking-widest">Total Spent</div>
+                    <div class="text-4xl font-black text-orange-500" id="total-spent">$0</div>
+                </div>
+                <div class="text-right cursor-pointer" onclick="app.updateRate()">
+                    <div class="text-[10px] font-bold bg-stone-800 px-2 py-1 rounded text-stone-400 mb-1">RATE ↻</div>
+                    <div class="text-xs font-mono text-stone-300" id="rate-display-sm">...</div>
+                </div>
+            </div>
+            <div id="stats-bar" class="flex h-2 rounded-full overflow-hidden bg-stone-700 w-full mt-4 mb-2"></div>
+            <div id="stats-legend" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <div class="px-2 mb-24">
+            <div class="flex justify-between text-xs font-black text-stone-500 mb-4 uppercase tracking-widest border-b-2 border-stone-300 pb-1">History</div>
+            <div id="list-expenses" class="space-y-4"></div>
+        </div>
+
+        <!-- 記帳頁面底部按鈕 -->
+        <div class="fixed-bottom-btn-container">
+             <button onclick="app.openCalculator()" style="width:90%; max-width:460px; padding:16px; border-radius:50px; background:#1c1917; color:white; font-weight:900; font-size:18px; border:3px solid #1c1917; box-shadow:0 4px 6px -1px rgba(0,0,0,0.3); display:flex; justify-content:center; align-items:center; gap:8px; pointer-events:auto; cursor:pointer;" class="active:scale-95 transition-transform">
+                <i data-lucide="plus" class="w-6 h-6"></i> 新增支出
+             </button>
+        </div>
+    </div>
+
+    <!-- ==================== 4. 伴手禮 ==================== -->
+    <div id="view-souvenir" class="hidden-view">
+        <div class="header-bar sticky top-0 bg-[#e5e5e5] z-20 pt-2">
+            <button onclick="app.goHome()" class="back-btn"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+            <h2 class="font-black text-2xl tracking-tight text-stone-900">GIFTS</h2>
+            <div class="flex gap-2 bg-white/80 backdrop-blur p-1.5 rounded-2xl border-2 border-stone-200">
+                <button onclick="app.switchView('itinerary')" style="width:40px; height:40px; border-radius:12px; border:2px solid #e5e7eb; background:white; color:#a8a29e; display:flex; align-items:center; justify-content:center;"><i data-lucide="map" class="w-5 h-5"></i></button>
+                <button onclick="app.switchView('packing')" style="width:40px; height:40px; border-radius:12px; border:2px solid #e5e7eb; background:white; color:#a8a29e; display:flex; align-items:center; justify-content:center;"><i data-lucide="luggage" class="w-5 h-5"></i></button>
+                <button onclick="app.switchView('budget')" style="width:40px; height:40px; border-radius:12px; border:2px solid #e5e7eb; background:white; color:#a8a29e; display:flex; align-items:center; justify-content:center;"><i data-lucide="wallet" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+        <div id="list-souvenir" class="grid grid-cols-2 gap-4 pb-32"></div>
+
+        <!-- 底部大按鈕 -->
+        <div class="fixed-bottom-btn-container">
+             <button onclick="document.getElementById('dialog-souvenir').showModal()" style="width:90%; max-width:460px; padding:16px; border-radius:50px; background:#1c1917; color:white; font-weight:900; font-size:18px; border:3px solid #1c1917; box-shadow:0 4px 6px -1px rgba(0,0,0,0.3); display:flex; justify-content:center; align-items:center; gap:8px; pointer-events:auto; cursor:pointer;" class="active:scale-95 transition-transform">
+                <i data-lucide="gift" class="w-5 h-5"></i> ADD GIFT
+             </button>
+        </div>
+    </div>
+
+</div>
+
+<!-- FAB: 全域計算機 -->
+<button id="fab-calc" onclick="app.openCalculator()" class="fab-calc hidden">
+    <i data-lucide="calculator" class="w-8 h-8"></i>
+</button>
+
+
+<!-- 彈窗：計算機 -->
+<dialog id="dialog-calculator">
+    <div class="bg-white rounded-[24px] p-4 m-2 shadow-2xl border-4 border-stone-900">
+        <div class="flex justify-between items-center mb-2">
+            <div class="text-xs font-black text-stone-400 uppercase tracking-widest">Calculator</div>
+            <button type="button" onclick="document.getElementById('dialog-calculator').close()" class="p-2 bg-stone-100 rounded-full active:bg-stone-200"><i data-lucide="x" class="w-5 h-5 text-stone-600"></i></button>
+        </div>
+
+        <!-- 螢幕 -->
+        <div class="bg-stone-100 rounded-xl px-3 py-1 mb-3 text-right border-2 border-stone-200">
+            <input type="text" id="calc-display" class="w-full bg-transparent text-4xl font-black text-right outline-none text-stone-800 tracking-tighter mb-1" placeholder="0" readonly>
+            <div class="text-stone-400 font-bold text-sm border-t border-stone-200 pt-1 flex justify-end items-center gap-2 pb-1">
+                <span class="text-[10px] bg-orange-100 text-orange-600 px-1 rounded">TWD</span>
+                <span>≈ <span id="calc-res">0</span></span>
+            </div>
+        </div>
+        
+        <!-- 分類 -->
+        <div class="flex gap-2 mb-3">
+            <select id="calc-cat" class="w-1/3 bg-white text-stone-800 text-xs font-black py-2 rounded-lg outline-none text-center border-2 border-stone-200 focus:border-stone-800">
+                <option value="食">FOOD</option>
+                <option value="行">RIDE</option>
+                <option value="住">STAY</option>
+                <option value="買">SHOP</option>
+                <option value="樂">FUN</option>
+            </select>
+            <input type="text" id="calc-note" placeholder="備註 (選填)..." class="w-2/3 bg-white text-stone-800 text-xs px-3 rounded-lg outline-none font-bold border-2 border-stone-200 focus:border-stone-800">
+        </div>
+
+        <!-- 鍵盤 -->
+        <div class="grid grid-cols-4 gap-2">
+            <button style="height:80px; border-radius:12px; background:white; color:#1c1917; font-size:24px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917;" onclick="app.calcAppend('7')">7</button>
+            <button style="height:80px; border-radius:12px; background:white; color:#1c1917; font-size:24px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917;" onclick="app.calcAppend('8')">8</button>
+            <button style="height:80px; border-radius:12px; background:white; color:#1c1917; font-size:24px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917;" onclick="app.calcAppend('9')">9</button>
+            <button style="height:80px; border-radius:12px; background:#fff7ed; color:#f97316; font-size:20px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917;" onclick="app.calcDel()"><i data-lucide="delete" class="w-6 h-6 mx-auto"></i></button>
+            
+            <button style="height:80px; border-radius:12px; background:white; color:#1c1917; font-size:24px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917;" onclick="app.calcAppend('4')">4</button>
+            <button style="height:80px; border-radius:12px; background:white; color:#1c1917; font-size:24px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917;" onclick="app.calcAppend('5')">5</button>
+            <button style="height:80px; border-radius:12px; background:white; color:#1c1917; font-size:24px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917;" onclick="app.calcAppend('6')">6</button>
+            <button style="height:80px; border-radius:12px; background:#fff7ed; color:#f97316; font-size:24px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917;" onclick="app.calcClear()">C</button>
+            
+            <button style="height:80px; border-radius:12px; background:white; color:#1c1917; font-size:24px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917;" onclick="app.calcAppend('1')">1</button>
+            <button style="height:80px; border-radius:12px; background:white; color:#1c1917; font-size:24px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917;" onclick="app.calcAppend('2')">2</button>
+            <button style="height:80px; border-radius:12px; background:white; color:#1c1917; font-size:24px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917;" onclick="app.calcAppend('3')">3</button>
+            
+            <button style="height:100%; border-radius:12px; background:#1c1917; color:white; font-size:20px; font-weight:900; border:2px solid #1c1917; grid-row: span 2; display:flex; flex-direction:column; align-items:center; justify-content:center;" onclick="app.addExpense()">
+                <span style="font-size:10px; opacity:0.7;">SAVE</span>
+                OK
+            </button>
+            
+            <button style="height:80px; border-radius:12px; background:white; color:#1c1917; font-size:24px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917; grid-column: span 2;" onclick="app.calcAppend('0')">0</button>
+            <button style="height:80px; border-radius:12px; background:white; color:#1c1917; font-size:24px; font-weight:900; border:2px solid #1c1917; box-shadow:2px 2px 0 #1c1917;" onclick="app.calcAppend('.')">.</button>
+        </div>
+    </div>
+</dialog>
+
+<dialog id="dialog-itinerary">
+    <div class="bg-white rounded-[24px] p-5 m-2 shadow-2xl border-2 border-stone-200">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-black text-xl text-stone-800">EDIT PLAN</h3>
+            <button type="button" onclick="document.getElementById('dialog-itinerary').close()" class="p-2 bg-stone-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <form id="form-itinerary" class="space-y-4">
+            <input type="hidden" id="itin-id">
+            <div class="bg-stone-50 p-3 rounded-xl border border-stone-200">
+                <label class="text-[10px] font-bold text-stone-400 uppercase block mb-1">Date</label>
+                <input type="date" id="itin-date" class="w-full bg-transparent font-bold text-stone-800 outline-none text-lg" required>
+            </div>
+            <div class="flex gap-3">
+                <div class="w-1/3">
+                     <label class="text-[10px] font-bold text-stone-400 uppercase block mb-1">Time</label>
+                     <input type="time" id="itin-time" class="bg-stone-50 p-3 rounded-xl w-full text-center font-bold outline-none border border-stone-200 focus:border-stone-900">
+                </div>
+                <div class="w-2/3">
+                     <label class="text-[10px] font-bold text-stone-400 uppercase block mb-1">Category</label>
+                     <select id="itin-cat" class="bg-stone-50 p-3 rounded-xl w-full font-bold outline-none border border-stone-200 focus:border-stone-900">
+                        <option value="景點">📍 景點</option>
+                        <option value="美食">🍴 美食</option>
+                        <option value="購物">🛍️ 購物</option>
+                        <option value="交通">🚌 交通</option>
+                        <option value="航班">✈️ 航班</option>
+                    </select>
+                </div>
+            </div>
+            <input type="text" id="itin-title" placeholder="名稱 (例: SHIBUYA SKY)" class="w-full bg-stone-50 p-4 rounded-xl font-black text-lg outline-none border-2 border-stone-200 focus:border-stone-900" required>
+            <input type="text" id="itin-note" placeholder="備註..." class="w-full bg-stone-50 p-3 rounded-xl text-sm outline-none border border-stone-200 focus:border-stone-900">
+            <div class="relative">
+                <i data-lucide="map-pin" class="absolute left-3 top-3.5 w-4 h-4 text-stone-400"></i>
+                <input type="text" id="itin-map" placeholder="Google Maps 連結" class="w-full bg-stone-50 p-3 pl-10 rounded-xl text-sm outline-none border border-stone-200 focus:border-stone-900 text-blue-600 font-bold">
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" onclick="app.deleteItinerary()" id="btn-del-itin" class="hidden p-4 border-2 border-stone-200 text-stone-400 rounded-xl hover:border-red-500 hover:text-red-500"><i data-lucide="trash-2"></i></button>
+                <button type="submit" class="flex-grow bg-stone-900 text-white font-bold py-4 rounded-lg shadow-[4px_4px_0px_#f97316] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all border-2 border-stone-900">SAVE</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<dialog id="dialog-packing">
+    <div class="bg-white rounded-[24px] p-5 m-2 shadow-2xl border-2 border-stone-200">
+         <div class="flex justify-between items-center mb-4">
+            <h3 class="font-black text-xl text-stone-800">ADD ITEM</h3>
+            <button type="button" onclick="document.getElementById('dialog-packing').close()" class="p-2 bg-stone-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+         </div>
+         <form id="form-packing" class="space-y-3">
+             <select id="pack-cat" class="w-full bg-stone-50 p-3 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900">
+                <option value="證件錢包">證件錢包</option>
+                <option value="衣物穿搭">衣物穿搭</option>
+                <option value="電子產品">電子產品</option>
+                <option value="藥品雜物">藥品雜物</option>
+                <option value="其他">其他</option>
+             </select>
+             <input type="text" id="pack-name" placeholder="物品名稱" class="w-full bg-stone-50 p-4 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900" required>
+             <button type="submit" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg shadow-[4px_4px_0px_#10b981] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all border-2 border-stone-900 mt-2">ADD</button>
+         </form>
+    </div>
+</dialog>
+
+<dialog id="dialog-souvenir">
+    <div class="bg-white rounded-[24px] p-5 m-2 shadow-2xl border-2 border-stone-200">
+         <div class="flex justify-between items-center mb-4">
+            <h3 class="font-black text-xl text-stone-800">ADD GIFT</h3>
+            <button type="button" onclick="document.getElementById('dialog-souvenir').close()" class="p-2 bg-stone-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+         </div>
+         <form id="form-souvenir" class="space-y-3">
+             <div class="flex gap-2">
+                <input type="text" id="souv-name" placeholder="商品名稱" class="w-2/3 bg-stone-50 p-3 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900" required>
+                <input type="number" id="souv-qty" value="1" class="w-1/3 bg-stone-50 p-3 rounded-xl font-bold outline-none text-center border border-stone-200 focus:border-stone-900">
+             </div>
+             <input type="text" id="souv-img" placeholder="圖片連結 (選填)" class="w-full bg-stone-50 p-3 rounded-xl text-sm outline-none border border-stone-200 focus:border-stone-900">
+             <button type="submit" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg shadow-[4px_4px_0px_#ec4899] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all border-2 border-stone-900 mt-2">ADD</button>
+         </form>
+    </div>
+</dialog>
+
+
+<script type="module">
+    // -----------------------------------------------------------
+    // 請在這裡填入您的 Firebase Config
+    // -----------------------------------------------------------
+    const firebaseConfig = {
+  apiKey: "AIzaSyCFb",
+  authDomain: "travel-fc0fd.firebaseapp.com",
+  projectId: "travel-fc0fd",
+  storageBucket: "travel-fc0fd.firebasestorage.app",
+  messagingSenderId: "648761523272",
+  appId: "1:648761523272:web:a3c62013ff13cdc43dac7d"
+};
+    
+    try {
+        const envConfig = JSON.parse(__firebase_config);
+        Object.assign(firebaseConfig, envConfig);
+    } catch(e) {}
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    let fbApp, auth, db;
+    try {
+        fbApp = initializeApp(firebaseConfig);
+        auth = getAuth(fbApp);
+        db = getFirestore(fbApp);
+    } catch (e) {
+        console.warn("Firebase init error");
+    }
+    
+    const TRIP_ID = "tokyo_trip_shared";
+    let userId = null;
+    let activeDate = '2025-12-14';
+    let cachedItinerary = [];
+    let calcVal = '0';
+    let currentRate = 0.22;
+    const petPhotos = ["https://drive.google.com/file/d/0BwtbUpTKUoIydk1hX3I0VVBsSnc/view?usp=sharing&resourcekey=0-S75wIVTrd5gd9BRmPRY2rA","https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400"];
+
+    const uiApp = {
+        init(user) {
+            userId = user.uid;
+            document.getElementById('auth-status-dot').classList.replace('bg-gray-400', 'bg-green-500');
+            document.getElementById('auth-status-text').innerText = 'ONLINE';
+            this.startListeners();
+            this.updateRate();
+            this.startSlideshow();
+        },
+        
+        initOffline(guestId) {
+            userId = guestId;
+            document.getElementById('auth-status-text').innerText = 'OFFLINE';
+            this.startSlideshow();
+            this.updateRate();
+        },
+
+        switchView(view) {
+            document.getElementById('view-home').classList.add('hidden-view');
+            document.getElementById('view-home').classList.remove('active-view');
+            ['itinerary', 'packing', 'budget', 'souvenir'].forEach(v => {
+                const el = document.getElementById('view-' + v);
+                if(v === view) { el.classList.remove('hidden-view'); el.classList.add('active-view'); } 
+                else { el.classList.add('hidden-view'); el.classList.remove('active-view'); }
+            });
+            const fab = document.getElementById('fab-calc');
+            if(view === 'budget' || view === 'view-home') fab.style.display = 'none';
+            else fab.style.display = 'flex';
+            if(view === 'itinerary') this.renderItinerary();
+            lucide.createIcons();
+        },
+        
+        goHome() {
+            document.querySelectorAll('.active-view').forEach(el => { el.classList.add('hidden-view'); el.classList.remove('active-view'); });
+            document.getElementById('view-home').classList.remove('hidden-view');
+            document.getElementById('view-home').classList.add('active-view');
+            document.getElementById('fab-calc').style.display = 'flex';
+        },
+
+        getCol(name) { return collection(db, `trips/${TRIP_ID}/${name}`); },
+
+        startListeners() {
+            if(!db) return;
+            try {
+                const qItin = query(this.getCol('itinerary'), orderBy('date'));
+                onSnapshot(qItin, (snap) => {
+                    cachedItinerary = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    cachedItinerary.sort((a, b) => {
+                        const d = a.date.localeCompare(b.date);
+                        if(d !== 0) return d;
+                        return (a.time||'').localeCompare(b.time||'');
+                    });
+                    this.renderItinerary();
+                });
+                onSnapshot(query(this.getCol('todos'), orderBy('createdAt')), (snap) => this.renderTodo(snap.docs.map(d=>({id:d.id, ...d.data()}))));
+                onSnapshot(query(this.getCol('packing')), (snap) => this.renderPacking(snap.docs.map(d=>({id:d.id, ...d.data()}))));
+                onSnapshot(query(this.getCol('expenses'), orderBy('createdAt', 'desc')), (snap) => this.renderExpenses(snap.docs.map(d=>({id:d.id, ...d.data()}))));
+                onSnapshot(query(this.getCol('souvenirs'), orderBy('createdAt', 'desc')), (snap) => this.renderSouvenir(snap.docs.map(d=>({id:d.id, ...d.data()}))));
+            } catch(e) { console.warn("Offline error"); }
+        },
+
+        renderItinerary() {
+            const container = document.getElementById('list-itinerary');
+            const tabs = document.getElementById('nav-dates');
+            if(!container) return;
+            const fixedDates = ['2025-12-14','2025-12-15','2025-12-16','2025-12-17','2025-12-18','2025-12-19'];
+            const grouped = cachedItinerary.reduce((acc, item) => { (acc[item.date] = acc[item.date] || []).push(item); return acc; }, {});
+            const allDates = Array.from(new Set([...fixedDates, ...Object.keys(grouped).filter(d => d !== '0')]));
+            allDates.sort();
+
+            let tabsHtml = `<div onclick="window.app.switchDate('0')" class="date-tab ${activeDate==='0'?'active':''}"><span class="day-label">PRE</span><span class="date-num">★</span></div>`;
+            tabsHtml += allDates.map(d => {
+                const dateObj = new Date(d);
+                return `<div onclick="window.app.switchDate('${d}')" class="date-tab ${activeDate===d?'active':''}"><span class="day-label">DEC</span><span class="date-num">${dateObj.getDate()}</span></div>`;
+            }).join('');
+            tabs.innerHTML = tabsHtml;
+
+            if(!activeDate) activeDate = '2025-12-14';
+            const isPre = activeDate === '0';
+            document.getElementById('section-todo').className = isPre ? 'block' : 'hidden';
+            document.getElementById('section-itinerary').className = isPre ? 'hidden' : 'block';
+            document.getElementById('btn-itin-add-container').style.display = isPre ? 'none' : 'flex';
+
+            if(!isPre) {
+                const items = grouped[activeDate] || [];
+                const dateObj = new Date(activeDate);
+                this.fetchWeather(activeDate, (w, temp) => {
+                    const el = document.getElementById('weather-info');
+                    if(el) el.innerHTML = `${w} <span class="text-sm ml-1 font-bold">${temp}</span>`;
+                });
+
+                let html = `<div class="mb-6 flex items-center justify-between pl-1"><h3 class="font-black text-4xl text-stone-900 italic tracking-tighter uppercase">${dateObj.toLocaleDateString('en-US', {weekday:'long'})} <span class="text-stone-400 text-lg not-italic">${dateObj.getMonth()+1}/${dateObj.getDate()}</span></h3><div id="weather-info" class="text-2xl flex items-center">...</div></div>`;
+                html += `<div class="timeline-container">`;
+                if(items.length === 0) html += `<div class="text-stone-400 text-center py-10 font-bold">NO PLANS YET</div>`;
+                items.forEach(item => {
+                    const mapUrl = item.map || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.title)}`;
+                    if(item.cat === '航班') {
+                         html += `<div class="timeline-item group" onclick="app.openItineraryModal('${item.id}')"><div class="timeline-line"></div><div class="bg-white border-2 border-stone-900 rounded-2xl p-4 relative shadow-[4px_4px_0px_#fcd34d] mb-6 ticket-card"><div class="flex justify-between items-center mb-4 border-b-2 border-dashed border-stone-300 pb-2"><div class="font-mono font-bold text-stone-500 text-xs">FLIGHT TICKET</div><div class="font-mono font-black text-lg">${item.time || '--:--'}</div></div><div class="flex justify-between items-center"><div class="text-3xl font-black">TPE</div><i data-lucide="plane" class="text-stone-400"></i><div class="text-3xl font-black">TYO</div></div><div class="text-center mt-2 font-bold text-stone-600">${item.title}</div></div></div>`;
+                    } else if(item.cat === '交通') {
+                        html += `<div class="timeline-item" onclick="app.openItineraryModal('${item.id}')"><div class="timeline-line"></div><div class="flex items-center gap-3 mb-4"><div class="w-8 h-8 bg-stone-900 rounded-full flex items-center justify-center text-white z-10 border-2 border-white"><i data-lucide="bus" class="w-4 h-4"></i></div><div class="bg-stone-200 px-3 py-1 rounded-lg text-xs font-bold text-stone-600 flex-grow">${item.time} ${item.title} <span class="opacity-50 ml-1">${item.note||''}</span></div></div></div>`;
+                    } else {
+                        html += `<div class="timeline-item group cursor-pointer" onclick="app.openItineraryModal('${item.id}')"><div class="timeline-line"></div><div class="timeline-dot"></div><div class="flex gap-4 mb-6 pl-4"><div class="w-12 text-right pt-1 font-mono font-bold text-stone-600 text-sm">${item.time || ''}</div><div class="flex-grow card-marble p-4 relative active:scale-98 transition-transform"><div class="flex justify-between items-start mb-1"><h3 class="font-black text-xl uppercase leading-tight">${item.title}</h3></div><p class="text-xs font-bold text-stone-400 mb-3">#${item.cat}</p><p class="text-sm text-stone-600 font-medium mb-3 border-l-2 border-orange-200 pl-2">${item.note || 'No details'}</p><div class="flex gap-2"><a href="${mapUrl}" target="_blank" onclick="event.stopPropagation()" class="bg-stone-100 hover:bg-stone-900 hover:text-white text-stone-600 px-3 py-1 rounded-md text-xs font-bold border border-stone-200 transition-colors">MAP</a></div></div></div></div>`;
+                    }
+                });
+                html += `</div>`;
+                container.innerHTML = html;
+            }
+            lucide.createIcons();
+        },
+        switchDate(d) { activeDate = d; this.renderItinerary(); },
+        async fetchWeather(dateStr, cb) { try { const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&daily=weathercode,temperature_2m_max&timezone=Asia%2FTokyo&start_date=${dateStr}&end_date=${dateStr}`); const data = await res.json(); const code = data.daily.weathercode[0]; const temp = data.daily.temperature_2m_max[0]; let icon = '☁️'; if (code <= 1) icon = '☀️'; else if (code <= 3) icon = '⛅'; else if (code <= 67) icon = '🌧️'; else if (code <= 77) icon = '❄️'; cb(icon, `${Math.round(temp)}°C`); } catch(e) { cb('✨', ''); } },
+        
+        renderTodo(items) {
+            const list = document.getElementById('list-todo');
+            const cats = ["證件", "預訂", "採買", "其他"];
+            list.innerHTML = cats.map(cat => {
+                const filtered = items.filter(i => i.cat === cat);
+                if(filtered.length === 0) return '';
+                return `<div class="mb-4"><div class="text-xs font-black text-stone-400 uppercase mb-2 tracking-widest">${cat}</div><div class="space-y-2">${filtered.map(i => `<div class="flex items-center bg-stone-50 p-2 rounded-lg border border-stone-200"><input type="checkbox" class="checkbox-industrial mr-3" ${i.done?'checked':''} onchange="app.toggleTodo('${i.id}', this.checked)"><span class="flex-grow text-sm font-bold ${i.done?'line-through text-stone-400':'text-stone-800'}">${i.text}</span><button onclick="app.delDoc('todos', '${i.id}')"><i data-lucide="x" class="w-4 h-4 text-stone-300 hover:text-red-500"></i></button></div>`).join('')}</div></div>`;
+            }).join('');
+            lucide.createIcons();
+        },
+        renderPacking(items) {
+            const container = document.getElementById('packing-container');
+            const cats = ["證件錢包", "衣物穿搭", "電子產品", "藥品雜物", "其他"];
+            container.innerHTML = cats.map(cat => {
+                const filtered = items.filter(i => i.category === cat);
+                if(filtered.length === 0) return '';
+                return `<div class="card-marble p-4 bg-white"><div class="flex justify-between border-b-2 border-stone-100 pb-2 mb-2"><span class="font-black text-sm uppercase">${cat}</span><span class="text-xs font-bold text-stone-400">${filtered.filter(x=>x.checked).length}/${filtered.length}</span></div><div class="space-y-2">${filtered.map(i => `<div class="flex items-center"><input type="checkbox" class="checkbox-industrial mr-3 scale-75" ${i.checked?'checked':''} onchange="app.togglePack('${i.id}', this.checked)"><span class="flex-grow text-sm font-bold ${i.checked?'line-through text-stone-300':'text-stone-800'}">${i.name}</span><button onclick="app.delDoc('packing', '${i.id}')"><i data-lucide="x" class="w-4 h-4 text-stone-300 hover:text-red-500"></i></button></div>`).join('')}</div></div>`;
+            }).join('');
+            lucide.createIcons();
+        },
+        renderExpenses(items) {
+            const list = document.getElementById('list-expenses');
+            let total = 0;
+            const grouped = items.reduce((acc, item) => { const d = item.createdAt ? new Date(item.createdAt.seconds*1000).toLocaleDateString('zh-TW') : 'N/A'; (acc[d]=acc[d]||[]).push(item); return acc; }, {});
+            list.innerHTML = Object.keys(grouped).map(date => `<div class="mb-4"><div class="text-[10px] font-black bg-stone-200 inline-block px-2 py-1 rounded mb-2">${date}</div><div class="space-y-2">${grouped[date].map(i => { total += i.twd; return `<div class="flex justify-between items-center bg-white border-b-2 border-stone-100 pb-2"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-stone-900 text-white flex items-center justify-center font-black text-xs">${i.cat.substr(0,1)}</div><div><div class="font-bold text-stone-800 text-sm">${i.note}</div><div class="text-[10px] text-stone-400 font-mono">¥${i.jpy}</div></div></div><div class="text-right"><div class="font-black text-orange-500">$${i.twd}</div><button class="text-[10px] text-stone-300 hover:text-red-500 underline" onclick="app.delDoc('expenses', '${i.id}')">DEL</button></div></div>` }).join('')}</div></div>`).join('');
+            document.querySelectorAll('#total-spent, #home-budget-display').forEach(el => el.innerText = `$${total.toLocaleString()}`);
+            lucide.createIcons();
+        },
+        renderSouvenir(items) {
+            const list = document.getElementById('list-souvenir');
+            list.innerHTML = items.map(i => {
+                if(i.img) return `<div class="relative card-marble bg-white p-0 h-40"><img src="${i.img}" class="w-full h-full object-cover rounded-[14px]"><div class="absolute inset-0 bg-gradient-to-t from-stone-900/90 to-transparent flex flex-col justify-end p-3 rounded-[14px]"><div class="text-white font-black text-sm">${i.name}</div><div class="text-orange-400 text-xs font-bold">x ${i.qty}</div></div><button class="absolute top-2 right-2 bg-white border-2 border-stone-900 rounded-full p-1" onclick="app.delDoc('souvenirs', '${i.id}')"><i data-lucide="x" class="w-3 h-3"></i></button></div>`;
+                return `<div class="card-marble bg-white h-40 flex flex-col items-center justify-center text-center p-4 relative"><i data-lucide="gift" class="w-8 h-8 text-stone-300 mb-2"></i><div class="font-black text-stone-800 leading-tight">${i.name}</div><div class="text-xs font-bold text-orange-500 mt-1 border-2 border-orange-500 px-2 rounded-full">QTY: ${i.qty}</div><button class="absolute top-2 right-2 text-stone-300 hover:text-red-500" onclick="app.delDoc('souvenirs', '${i.id}')"><i data-lucide="x" class="w-4 h-4"></i></button></div>`;
+            }).join('');
+            lucide.createIcons();
+        },
+        startSlideshow() { let i = 0; const el = document.getElementById('pet-frame'); setInterval(() => { el.style.backgroundImage = `url(${petPhotos[i]})`; i = (i + 1) % petPhotos.length; }, 3000); el.style.backgroundImage = `url(${petPhotos[0]})`; },
+        
+        openItineraryModal(id=null) {
+            const form = document.getElementById('form-itinerary');
+            form.reset();
+            document.getElementById('itin-id').value = '';
+            document.getElementById('btn-del-itin').classList.add('hidden');
+            if(activeDate && activeDate !== '0') document.getElementById('itin-date').value = activeDate;
+            if(id) {
+                const item = cachedItinerary.find(i => i.id === id);
+                if(item) {
+                    document.getElementById('itin-id').value = item.id;
+                    document.getElementById('itin-date').value = item.date;
+                    document.getElementById('itin-time').value = item.time;
+                    document.getElementById('itin-cat').value = item.cat;
+                    document.getElementById('itin-title').value = item.title;
+                    document.getElementById('itin-note').value = item.note;
+                    document.getElementById('itin-map').value = item.map;
+                    document.getElementById('btn-del-itin').classList.remove('hidden');
+                }
+            }
+            document.getElementById('dialog-itinerary').showModal();
+        },
+        openCalculator() { document.getElementById('dialog-calculator').showModal(); },
+        
+        async addTodoFromInput() { const input = document.getElementById('todo-input'); if(!input.value) return; await addDoc(this.getCol('todos'), { text: input.value, cat: '其他', done: false, createdAt: serverTimestamp() }); input.value = ''; },
+        async toggleTodo(id, state) { await updateDoc(doc(db, `trips/${TRIP_ID}/todos`, id), {done: state}); },
+        async togglePack(id, state) { await updateDoc(doc(db, `trips/${TRIP_ID}/packing`, id), {checked: state}); },
+        async delDoc(col, id) { if(confirm('DELETE?')) await deleteDoc(doc(db, `trips/${TRIP_ID}/${col}`, id)); },
+        async deleteItinerary() { const id = document.getElementById('itin-id').value; if(confirm('DELETE?')) { await deleteDoc(doc(db, `trips/${TRIP_ID}/itinerary`, id)); document.getElementById('dialog-itinerary').close(); } },
+        
+        calcAppend(n) { if(calcVal==='0'&&n!=='.')calcVal=''; if(n==='.'&&calcVal.includes('.'))return; calcVal+=n; this.updateCalc(); },
+        calcDel() { calcVal=calcVal.slice(0,-1)||'0'; this.updateCalc(); },
+        calcClear() { calcVal='0'; this.updateCalc(); },
+        updateCalc() { document.getElementById('calc-display').value = calcVal; const rate = currentRate; document.getElementById('calc-res').innerText = Math.round(parseFloat(calcVal||0) * rate).toLocaleString(); },
+        async addExpense() { const amt = parseFloat(calcVal); if(!amt) return; await addDoc(this.getCol('expenses'), { jpy: amt, twd: Math.round(amt*currentRate), cat: document.getElementById('calc-cat').value, note: document.getElementById('calc-note').value||'EXPENSE', createdAt: serverTimestamp() }); this.calcClear(); document.getElementById('dialog-calculator').close(); },
+        async updateRate() { try { const res=await fetch('https://api.exchangerate-api.com/v4/latest/JPY'); const d=await res.json(); currentRate=d.rates.TWD; document.getElementById('home-rate').innerText = `1 JPY ≈ ${currentRate.toFixed(2)} TWD`; document.getElementById('rate-val-calc').innerText = currentRate.toFixed(2); } catch(e){} }
+    };
+    window.app = uiApp;
+
+    // --- Auth Handler ---
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            uiApp.init(user);
+        } else {
+            signInAnonymously(auth).catch(err => {
+                console.warn("Offline mode", err);
+                uiApp.initOffline('guest');
+            });
+        }
+    });
+
+    // Form Handlers
+    document.getElementById('form-itinerary').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('itin-id').value;
+        const data = { date: document.getElementById('itin-date').value, time: document.getElementById('itin-time').value, cat: document.getElementById('itin-cat').value, title: document.getElementById('itin-title').value, note: document.getElementById('itin-note').value, map: document.getElementById('itin-map').value };
+        if(id) await updateDoc(doc(db, `trips/${TRIP_ID}/itinerary`, id), data);
+        else { data.createdAt = serverTimestamp(); await addDoc(uiApp.getCol('itinerary'), data); }
+        document.getElementById('dialog-itinerary').close();
+        activeDate = data.date;
+    };
+    document.getElementById('form-packing').onsubmit = async (e) => { e.preventDefault(); await addDoc(uiApp.getCol('packing'), { name: document.getElementById('pack-name').value, category: document.getElementById('pack-cat').value, checked: false, createdAt: serverTimestamp() }); document.getElementById('pack-name').value=''; document.getElementById('dialog-packing').close(); };
+    document.getElementById('form-souvenir').onsubmit = async (e) => { e.preventDefault(); await addDoc(uiApp.getCol('souvenirs'), { name: document.getElementById('souv-name').value, qty: document.getElementById('souv-qty').value, img: document.getElementById('souv-img').value, createdAt: serverTimestamp() }); e.target.reset(); document.getElementById('dialog-souvenir').close(); };
+    
+    document.getElementById('dialog-calculator').addEventListener('close', () => { const view = document.querySelector('.active-view').id; if(view !== 'view-home' && view !== 'view-budget') document.getElementById('fab-calc').style.display = 'flex'; });
+</script>
+</body>
+</html>
