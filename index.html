@@ -898,10 +898,11 @@
         },
 
         toggleCurrency() {
-            this.calcMode = this.calcMode === 'JPY_TWD' ? 'TWD_JPY' : 'JPY_TWD';
-            document.getElementById('calc-mode-text').innerText = this.calcMode === 'JPY_TWD' ? 'JPY → TWD' : 'TWD → JPY';
-            document.getElementById('calc-input-unit').innerText = this.calcMode === 'JPY_TWD' ? 'JPY' : 'TWD';
-            document.getElementById('calc-output-unit').innerText = this.calcMode === 'JPY_TWD' ? 'TWD' : 'JPY';
+            // [Fix] 移除 this.，直接使用全域變數
+            calcMode = calcMode === 'JPY_TWD' ? 'TWD_JPY' : 'JPY_TWD';
+            document.getElementById('calc-mode-text').innerText = calcMode === 'JPY_TWD' ? 'JPY → TWD' : 'TWD → JPY';
+            document.getElementById('calc-input-unit').innerText = calcMode === 'JPY_TWD' ? 'JPY' : 'TWD';
+            document.getElementById('calc-output-unit').innerText = calcMode === 'JPY_TWD' ? 'TWD' : 'JPY';
             this.updateCalc();
         },
         calcAppend(n) { if(calcVal==='0'&&n!=='.')calcVal=''; if(n==='.'&&calcVal.includes('.'))return; calcVal+=n; this.updateCalc(); },
@@ -911,7 +912,8 @@
             document.getElementById('calc-display').value = Number(calcVal).toLocaleString(); 
             const val = parseFloat(calcVal||0);
             let res = 0;
-            if (this.calcMode === 'JPY_TWD') res = Math.round(val * currentRate);
+            // [Fix] 移除 this.，直接使用全域變數，確保初始狀態正確
+            if (calcMode === 'JPY_TWD') res = Math.round(val * currentRate);
             else res = Math.round(val / currentRate);
             document.getElementById('calc-res').innerText = res.toLocaleString(); 
         },
@@ -979,7 +981,14 @@
                 document.getElementById('dialog-mustbuy').close(); 
             } catch(e) { console.error(e); uiApp.showCustomAlert("新增失敗"); } 
         },
-        async updateRate() { try { const res=await fetch('https://api.exchangerate-api.com/v4/latest/JPY'); const d=await res.json(); currentRate=d.rates.TWD; } catch(e){} }
+        async updateRate() { 
+            try { 
+                const res=await fetch('https://api.exchangerate-api.com/v4/latest/JPY'); 
+                const d=await res.json(); 
+                currentRate=d.rates.TWD; 
+                this.updateCalc(); // [Fix] 抓到匯率後自動刷新一次，確保初始數值不是0
+            } catch(e){} 
+        }
     };
     
     window.app = uiApp;
