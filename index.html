@@ -30,7 +30,7 @@
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; position: relative; background-color: transparent; padding-bottom: 80px; }
         ::-webkit-scrollbar { display: none; }
 
-        /* 卡片風格 */
+        /* 大理石卡片 */
         .card-marble {
             background-color: #ffffff;
             border: 3px solid #1c1917;
@@ -59,27 +59,29 @@
         .active-view { display: block; animation: slideIn 0.2s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: 0; } }
 
-        /* 時間軸調整 */
-        .timeline-line { position: absolute; left: 12px; top: 24px; bottom: -10px; width: 3px; background: #d6d3d1; z-index: 0; }
-        .timeline-dot { position: absolute; left: 4px; top: 24px; width: 19px; height: 19px; background: #1c1917; border: 3px solid #f97316; border-radius: 50%; z-index: 10; }
-        .timeline-content-wrapper { padding-left: 36px; position: relative; }
+        /* 時間軸 */
+        .timeline-line { position: absolute; left: 19px; top: 24px; bottom: -10px; width: 3px; background: #d6d3d1; z-index: 0; }
+        .timeline-dot { position: absolute; left: 11px; top: 24px; width: 19px; height: 19px; background: #1c1917; border: 3px solid #f97316; border-radius: 50%; z-index: 10; }
+        .timeline-content-wrapper { padding-left: 50px; position: relative; }
         
-        /* 拖曳樣式 (乾淨版) */
-        .sortable-ghost { opacity: 0.3; background: #e7e5e4; border: 2px dashed #1c1917; }
-        .sortable-drag { opacity: 0.95; transform: scale(1.02); z-index: 50; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        /* 拖曳專用 */
+        .sortable-ghost { opacity: 0.2; background: #e7e5e4; border: 2px dashed #1c1917; }
+        .sortable-drag { opacity: 0.9; transform: scale(1.02); z-index: 50; background: white; }
         
+        /* 備忘錄內容 */
         .memo-content { white-space: pre-wrap; word-break: break-word; font-size: 0.9rem; line-height: 1.5; color: #44403c; }
 
-        /* FAB */
+        /* FAB 計算機 (預設隱藏) */
         .fab-calc {
             position: fixed; bottom: 40px; right: 20px; width: 64px; height: 64px; border-radius: 50%;
             background: #f97316; border: 3px solid #1c1917; color: white;
-            display: flex; align-items: center; justify-content: center;
+            display: none; /* 預設不顯示 */
+            align-items: center; justify-content: center;
             box-shadow: 4px 4px 0px #1c1917; z-index: 50; transition: transform 0.1s;
         }
         .fab-calc:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #1c1917; }
 
-        /* 按鈕容器 */
+        /* 按鈕與共用元件 */
         .flow-btn-container { margin-top: 30px; margin-bottom: 20px; display: flex; justify-content: center; width: 100%; }
         
         .big-action-btn {
@@ -98,6 +100,7 @@
         .date-tab { flex-shrink: 0; width: 60px; height: 64px; border: 2px solid #1c1917; background: white; color: #1c1917; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; cursor: pointer; transition: all 0.2s; box-shadow: 3px 3px 0px #a8a29e; border-radius: 12px; }
         .date-tab.active { background: #1c1917; color: #f97316; box-shadow: 3px 3px 0px #f97316; transform: translate(-1px, -1px); }
         
+        /* 自定義 Checkbox */
         .checkbox-custom { 
             appearance: none; width: 24px; height: 24px; border: 2px solid #1c1917; background: white; 
             display: grid; place-content: center; cursor: pointer; flex-shrink: 0; border-radius: 6px; 
@@ -110,6 +113,7 @@
         .checkbox-custom:checked { background: #e5e5e5; border-color: #78716c; }
         .checkbox-custom:checked::before { background: #78716c; }
 
+        /* 完成項目樣式 */
         .item-checked { opacity: 0.5; order: 999; }
         .item-checked span { text-decoration: line-through; }
 
@@ -138,7 +142,7 @@
                     <span id="auth-status-text">ONLINE</span>
                 </div>
             </div>
-            <!-- 純計算機 -->
+            <!-- 純計算機，不含記帳功能 -->
             <button onclick="window.app && window.app.openCalculator()" style="width:56px; height:56px; background:#f97316; color:white; border:2px solid #1c1917; border-radius:16px; box-shadow:3px 3px 0 #1c1917; display:flex; align-items:center; justify-content:center;" class="active:translate-y-1 active:shadow-none transition-all">
                 <i data-lucide="calculator" class="w-7 h-7"></i>
             </button>
@@ -280,7 +284,7 @@
 
 </div>
 
-<!-- FAB (純計算機) -->
+<!-- FAB (純計算機 - 首頁隱藏) -->
 <button id="fab-calc" onclick="window.app && window.app.openCalculator()" class="fab-calc hidden">
     <i data-lucide="calculator" class="w-8 h-8"></i>
 </button>
@@ -447,7 +451,7 @@
          </div>
          <form onsubmit="window.app.saveMustBuy(event)" class="space-y-3">
              <input type="text" id="mb-name" placeholder="商品名稱" class="w-full bg-stone-50 p-4 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900" required>
-             <input type="text" id="mb-details" placeholder="圖片連結 或 文字備註" class="w-full bg-stone-50 p-4 rounded-xl text-sm outline-none border border-stone-200 focus:border-stone-900">
+             <input type="text" id="mb-img" placeholder="圖片連結 (選填)" class="w-full bg-stone-50 p-4 rounded-xl text-sm outline-none border border-stone-200 focus:border-stone-900">
              <button type="submit" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg shadow-[4px_4px_0px_#f97316] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all border-2 border-stone-900 mt-2">ADD</button>
          </form>
     </div>
@@ -536,6 +540,7 @@
                 }
             });
 
+            // FIX: 首頁不顯示 FAB，內頁才顯示
             const fab = document.getElementById('fab-calc');
             if(view === 'view-home') fab.style.display = 'none';
             else fab.style.display = 'flex';
@@ -548,7 +553,8 @@
             document.querySelectorAll('.active-view').forEach(el => { el.classList.add('hidden-view'); el.classList.remove('active-view'); });
             document.getElementById('view-home').classList.remove('hidden-view');
             document.getElementById('view-home').classList.add('active-view');
-            document.getElementById('fab-calc').style.display = 'flex';
+            // FIX: 首頁隱藏 FAB
+            document.getElementById('fab-calc').style.display = 'none';
         },
 
         getCol(name) { return collection(db, `trips/${TRIP_ID}/${name}`); },
@@ -621,11 +627,11 @@
                     const mapBtn = item.map ? `<div class="flex gap-2 mt-3"><a href="${item.map}" target="_blank" onclick="event.stopPropagation()" class="w-full bg-stone-100 hover:bg-stone-900 hover:text-white text-stone-600 py-3 rounded-lg text-xs font-black border border-stone-200 transition-colors flex items-center justify-center tracking-wider shadow-sm gap-2"><i data-lucide="map" class="w-3 h-3"></i> MAP ↗</a></div>` : '';
 
                     if(item.cat === '航班') {
-                         html += `<div class="timeline-item group" data-id="${item.id}" onclick="window.app.openItineraryModal('${item.id}')"><div class="timeline-line"></div><div class="bg-white border-2 border-stone-900 rounded-2xl p-4 relative shadow-[4px_4px_0px_#fcd34d] mb-6 ticket-card ml-8"><div class="flex justify-between items-center mb-4 border-b-2 border-dashed border-stone-300 pb-2"><div class="font-mono font-bold text-stone-500 text-xs">FLIGHT TICKET</div><div class="font-mono font-black text-lg">${item.time || '--:--'}</div></div><div class="flex justify-between items-center"><div class="text-3xl font-black">TPE</div><i data-lucide="plane" class="text-stone-400"></i><div class="text-3xl font-black">TYO</div></div><div class="text-center mt-2 font-bold text-stone-600">${item.title}</div></div></div>`;
+                         html += `<div class="timeline-item group" data-id="${item.id}" onclick="window.app.openItineraryModal('${item.id}')"><div class="timeline-line"></div><div class="bg-white border-2 border-stone-900 rounded-2xl p-4 relative shadow-[4px_4px_0px_#fcd34d] mb-6 ticket-card ml-8"><div class="drag-handle absolute right-2 top-2 p-2 touch-none cursor-grab"><i data-lucide="menu" class="w-6 h-6 text-stone-300"></i></div><div class="flex justify-between items-center mb-4 border-b-2 border-dashed border-stone-300 pb-2"><div class="font-mono font-bold text-stone-500 text-xs">FLIGHT TICKET</div><div class="font-mono font-black text-lg">${item.time || '--:--'}</div></div><div class="flex justify-between items-center"><div class="text-3xl font-black">TPE</div><i data-lucide="plane" class="text-stone-400"></i><div class="text-3xl font-black">TYO</div></div><div class="text-center mt-2 font-bold text-stone-600">${item.title}</div></div></div>`;
                     } else if(item.cat === '交通') {
-                        html += `<div class="timeline-item" data-id="${item.id}" onclick="window.app.openItineraryModal('${item.id}')"><div class="timeline-line"></div><div class="flex items-center gap-3 mb-4 timeline-content-wrapper"><div class="w-12 h-12 bg-stone-900 rounded-full flex items-center justify-center text-white z-10 border-2 border-white flex-shrink-0 shadow-md"><i data-lucide="bus" class="w-6 h-6"></i></div><div class="bg-stone-200 px-3 py-2 rounded-lg text-xs font-bold text-stone-600 flex-grow">${item.time} ${item.title} <span class="opacity-50 ml-1">${item.note||''}</span></div></div></div>`;
+                        html += `<div class="timeline-item" data-id="${item.id}" onclick="window.app.openItineraryModal('${item.id}')"><div class="timeline-line"></div><div class="flex items-center gap-3 mb-4 timeline-content-wrapper"><div class="w-12 h-12 bg-stone-900 rounded-full flex items-center justify-center text-white z-10 border-2 border-white flex-shrink-0 drag-handle cursor-grab touch-none shadow-md"><i data-lucide="bus" class="w-6 h-6"></i></div><div class="bg-stone-200 px-3 py-2 rounded-lg text-xs font-bold text-stone-600 flex-grow">${item.time} ${item.title} <span class="opacity-50 ml-1">${item.note||''}</span></div></div></div>`;
                     } else {
-                        html += `<div class="timeline-item group cursor-pointer" data-id="${item.id}" onclick="window.app.openItineraryModal('${item.id}')"><div class="timeline-line"></div><div class="timeline-dot"></div><div class="flex gap-4 mb-6 timeline-content-wrapper"><div class="w-12 text-right pt-1 font-mono font-bold text-stone-600 text-sm flex-shrink-0">${item.time || ''}</div><div class="flex-grow card-marble p-4 relative active:scale-98 transition-transform"><div class="flex justify-between items-start mb-1"><h3 class="font-black text-xl uppercase leading-tight pr-8">${item.title}</h3></div><p class="text-xs font-bold text-stone-400 mb-3">#${item.cat}</p>${item.note ? `<p class="text-sm text-stone-600 font-medium mb-3 border-l-2 border-orange-200 pl-2 whitespace-pre-wrap">${item.note}</p>` : ''}${mapBtn}</div></div></div>`;
+                        html += `<div class="timeline-item group cursor-pointer" data-id="${item.id}" onclick="window.app.openItineraryModal('${item.id}')"><div class="timeline-line"></div><div class="timeline-dot drag-handle cursor-grab touch-none w-6 h-6 border-4"></div><div class="flex gap-4 mb-6 timeline-content-wrapper"><div class="w-12 text-right pt-1 font-mono font-bold text-stone-600 text-sm flex-shrink-0">${item.time || ''}</div><div class="flex-grow card-marble p-4 relative active:scale-98 transition-transform"><div class="flex justify-between items-start mb-1"><h3 class="font-black text-xl uppercase leading-tight">${item.title}</h3></div><p class="text-xs font-bold text-stone-400 mb-3">#${item.cat}</p>${item.note ? `<p class="text-sm text-stone-600 font-medium mb-3 border-l-2 border-orange-200 pl-2 whitespace-pre-wrap">${item.note}</p>` : ''}${mapBtn}</div></div></div>`;
                     }
                 });
                 html += `</div>`;
@@ -634,12 +640,12 @@
                 const sortEl = document.getElementById('timeline-sortable');
                 if(sortEl) {
                     sortableInstance = new Sortable(sortEl, {
+                        handle: '.drag-handle',
                         animation: 150,
                         ghostClass: 'sortable-ghost',
                         dragClass: 'sortable-drag',
-                        delay: 300,
-                        delayOnTouchOnly: true, // 手機上需要長按
-                        touchStartThreshold: 5,
+                        delay: 50,
+                        delayOnTouchOnly: true,
                         onEnd: function(evt) {
                             window.app.updateItineraryOrder();
                         }
@@ -715,30 +721,18 @@
             
             if(items.length === 0) { list.innerHTML = `<div class="text-center text-stone-400 font-bold py-10">NO ITEMS YET</div>`; return; }
 
-            list.innerHTML = items.map(i => {
-                const hasDetails = i.details && i.details.trim() !== '';
-                let detailContent = '';
-                if(hasDetails) {
-                    const isUrl = i.details.startsWith('http');
-                    if(isUrl) {
-                        detailContent = `<div id="mb-detail-${i.id}" class="hidden mt-3 rounded-lg overflow-hidden border-2 border-stone-900"><img src="${i.details}" class="w-full h-40 object-cover" onerror="this.style.display='none'"></div>`;
-                    } else {
-                        detailContent = `<div id="mb-detail-${i.id}" class="hidden mt-3 p-3 bg-orange-50 text-orange-800 font-bold text-sm rounded-lg border-l-4 border-orange-400">${i.details}</div>`;
-                    }
-                }
-
-                return `
+            list.innerHTML = items.map(i => `
                 <div class="card-marble-sm bg-white p-3 flex flex-col transition-all ${i.checked ? 'item-checked bg-stone-100' : ''}">
                     <div class="flex items-center gap-3">
                         <input type="checkbox" class="checkbox-custom" ${i.checked?'checked':''} onchange="window.app.toggleMustBuy('${i.id}', this.checked)">
-                        <div class="flex-grow font-black text-lg text-stone-800 cursor-pointer" ${hasDetails ? `onclick="document.getElementById('mb-detail-${i.id}').classList.toggle('hidden')"` : ''}>
-                            ${i.name} ${hasDetails ? '<i data-lucide="chevron-down" class="w-4 h-4 inline text-stone-400 ml-1"></i>' : ''}
+                        <div class="flex-grow font-black text-lg text-stone-800 cursor-pointer" onclick="document.getElementById('mb-img-${i.id}').classList.toggle('hidden')">
+                            ${i.name}
                         </div>
                         <button onclick="window.app.delDoc('mustbuy', '${i.id}')" class="text-stone-300 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
-                    ${detailContent}
+                    ${i.img ? `<div id="mb-img-${i.id}" class="hidden mt-3 rounded-lg overflow-hidden border-2 border-stone-900"><img src="${i.img}" class="w-full h-40 object-cover"></div>` : ''}
                 </div>
-            `}).join('');
+            `).join('');
             lucide.createIcons();
         },
 
@@ -885,10 +879,9 @@
         async saveMustBuy(e) { 
             e.preventDefault(); 
             try { 
-                // 將輸入欄位 id='mb-details' 的值存入 'details' 欄位
                 await addDoc(uiApp.getCol('mustbuy'), { 
                     name: document.getElementById('mb-name').value, 
-                    details: document.getElementById('mb-details').value, // 這裡改成存 details
+                    img: document.getElementById('mb-img').value, 
                     checked: false,
                     createdAt: serverTimestamp() 
                 }); 
