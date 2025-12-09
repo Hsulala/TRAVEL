@@ -471,17 +471,12 @@
         return false;
     };
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCFbodSlPH_CBmQrISVVyyBgQmn7golSZI",
-      authDomain: "travel-fc0fd.firebaseapp.com",
-      projectId: "travel-fc0fd",
-      storageBucket: "travel-fc0fd.firebasestorage.app",
-      messagingSenderId: "648761523272",
-      appId: "1:648761523272:web:a3c62013ff13cdc43dac7d"
-    };
+    // [SECURE] Firebase Config injected via Environment Variable
+    // 系統會自動注入 __firebase_config 變數，不需要寫死在這裡
+    const firebaseConfig = JSON.parse(__firebase_config);
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     let fbApp, auth, db;
@@ -832,8 +827,6 @@
                     }
                 }
 
-                // [修改] 點擊整行改為切換展開狀態 (toggle hidden)
-                // [修改] 鉛筆按鈕使用 stopPropagation 防止觸發展開，只觸發編輯
                 return `
                 <div class="card-marble-sm bg-white p-3 flex flex-col transition-all ${i.checked ? 'item-checked bg-stone-100' : ''}">
                     <div class="flex items-center gap-3">
@@ -1077,9 +1070,21 @@
             if(view !== 'view-home') document.getElementById('fab-calc').style.display = 'flex'; 
         });
         
+        // [SECURE] Enhanced Auth Logic with fallback
+        const initAuth = async () => {
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+        };
+        initAuth().catch(console.error);
+
         onAuthStateChanged(auth, (user) => {
             if (user) { uiApp.init(user); } 
-            else { signInAnonymously(auth).catch(err => { console.warn("Offline mode", err); uiApp.initOffline('guest'); }); }
+            else { 
+                // Fallback handled by initAuth, but good to have listener
+            }
         });
     });
 </script>
