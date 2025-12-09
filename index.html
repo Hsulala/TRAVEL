@@ -471,8 +471,6 @@
         return false;
     };
 
-    // [SECURE] Firebase Config injected via Environment Variable
-    // 系統會自動注入 __firebase_config 變數，不需要寫死在這裡
     const firebaseConfig = JSON.parse(__firebase_config);
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -489,7 +487,8 @@
         setTimeout(() => { document.getElementById('alert-msg').innerText = "資料庫連線失敗"; document.getElementById('dialog-alert').showModal(); }, 500);
     }
     
-    const TRIP_ID = "tokyo_trip_shared";
+    // [SECURE] Use Environment App ID
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
     let userId = null;
     let activeDate = '2025-12-14';
     let cachedItinerary = [];
@@ -529,6 +528,17 @@
             document.getElementById('dialog-alert').showModal();
         },
 
+        // [SECURE] Centralized Path Helpers - NOW SHARED
+        getCol(name) { 
+            // 改為 'public/data' 讓所有拿到這個 App 的人(你跟你男友)都能看到同一份資料
+            return collection(db, 'artifacts', appId, 'public', 'data', name);
+        },
+        
+        getDocRef(colName, docId) {
+            // 改為 'public/data' 讓所有拿到這個 App 的人(你跟你男友)都能看到同一份資料
+            return doc(db, 'artifacts', appId, 'public', 'data', colName, docId);
+        },
+
         switchView(view) {
             document.getElementById('view-home').classList.add('hidden-view');
             document.getElementById('view-home').classList.remove('active-view');
@@ -556,10 +566,8 @@
             document.getElementById('fab-calc').style.display = 'none';
         },
 
-        getCol(name) { return collection(db, `trips/${TRIP_ID}/${name}`); },
-
         startListeners() {
-            if(!db) return;
+            if(!db || !userId) return;
             try {
                 const qItin = query(this.getCol('itinerary'), orderBy('date'));
                 onSnapshot(qItin, (snap) => {
@@ -638,10 +646,8 @@
                 items.forEach(item => {
                     const handleHtml = `<div class="drag-handle absolute right-2 top-2 p-2 touch-none cursor-grab hover:bg-stone-100 rounded-full transition-colors"><i data-lucide="menu" class="w-5 h-5 text-stone-300"></i></div>`;
                     
-                    // 筆記 (預設隱藏)
                     const hasNote = item.note && item.note.trim().length > 0;
                     const noteId = `note-${item.id}`;
-                    // 如果有筆記，加上一個小圖示提示
                     const noteIndicator = hasNote ? `<button onclick="event.stopPropagation(); document.getElementById('${noteId}').classList.toggle('hidden')" class="ml-2 text-orange-400 hover:text-orange-600 transition-colors p-1"><i data-lucide="sticky-note" class="w-4 h-4"></i></button>` : '';
                     const noteHtml = hasNote ? `<div id="${noteId}" class="hidden mt-3 text-sm text-stone-600 font-medium border-l-2 border-orange-200 pl-2 whitespace-pre-wrap animate-fade-in">${item.note}</div>` : '';
 
@@ -923,25 +929,24 @@
             if(!title) return;
             try { 
                 if(id) {
-                    await updateDoc(doc(db, `trips/${TRIP_ID}/memos`, id), { title, content });
+                    await updateDoc(this.getDocRef('memos', id), { title, content });
                 } else {
                     await addDoc(this.getCol('memos'), { title, content, createdAt: serverTimestamp() }); 
                 }
                 document.getElementById('dialog-memo').close();
             } catch(e) { console.error(e); uiApp.showCustomAlert("儲存失敗: " + e.message); } 
         },
-        async togglePack(id, state) { try { await updateDoc(doc(db, `trips/${TRIP_ID}/packing`, id), {checked: state}); } catch(e) { console.error(e); } },
-        async toggleMustBuy(id, state) { try { await updateDoc(doc(db, `trips/${TRIP_ID}/mustbuy`, id), {checked: state}); } catch(e) { console.error(e); } },
+        async togglePack(id, state) { try { await updateDoc(this.getDocRef('packing', id), {checked: state}); } catch(e) { console.error(e); } },
+        async toggleMustBuy(id, state) { try { await updateDoc(this.getDocRef('mustbuy', id), {checked: state}); } catch(e) { console.error(e); } },
         
-        // 直接刪除，不確認
         async delDoc(col, id) { 
-            try { await deleteDoc(doc(db, `trips/${TRIP_ID}/${col}`, id)); } 
+            try { await deleteDoc(this.getDocRef(col, id)); } 
             catch(e) { console.error(e); uiApp.showCustomAlert("刪除失敗"); } 
         },
         async deleteItinerary() { 
             const id = document.getElementById('itin-id').value; 
             try { 
-                await deleteDoc(doc(db, `trips/${TRIP_ID}/itinerary`, id)); 
+                await deleteDoc(this.getDocRef('itinerary', id)); 
                 document.getElementById('dialog-itinerary').close(); 
             } catch(e) { console.error(e); uiApp.showCustomAlert("刪除失敗"); } 
         },
@@ -953,7 +958,7 @@
             
             items.forEach((el, index) => {
                 const id = el.getAttribute('data-id');
-                const ref = doc(db, `trips/${TRIP_ID}/itinerary`, id);
+                const ref = this.getDocRef('itinerary', id);
                 batch.update(ref, { order: index });
             });
             try { await batch.commit(); } catch(e) { console.error('Order update failed', e); }
@@ -993,7 +998,7 @@
             };
             try {
                 if(id) {
-                    await updateDoc(doc(db, `trips/${TRIP_ID}/itinerary`, id), data);
+                    await updateDoc(this.getDocRef('itinerary', id), data);
                 } else { 
                     const currentItems = cachedItinerary.filter(i => i.date === data.date);
                     data.order = currentItems.length;
@@ -1024,7 +1029,7 @@
             };
             try {
                 if(id) {
-                    await updateDoc(doc(db, `trips/${TRIP_ID}/wishlist`, id), data);
+                    await updateDoc(this.getDocRef('wishlist', id), data);
                 } else {
                     data.createdAt = serverTimestamp();
                     await addDoc(uiApp.getCol('wishlist'), data);
@@ -1042,7 +1047,7 @@
             };
             try { 
                 if(id) {
-                    await updateDoc(doc(db, `trips/${TRIP_ID}/mustbuy`, id), data);
+                    await updateDoc(this.getDocRef('mustbuy', id), data);
                 } else {
                     data.checked = false;
                     data.createdAt = serverTimestamp();
