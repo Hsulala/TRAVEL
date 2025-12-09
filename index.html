@@ -9,13 +9,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#e5e5e5">
 
+    <!-- 請確認你的 GitHub 倉庫中有上傳名為 logo.png 的圖片 -->
+    <link rel="apple-touch-icon" href="logo.png">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 圖示 (使用 UMD 版本以確保全域變數讀取正常) -->
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     
-    <!-- 拖曳套件 -->
+    <!-- SortableJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     
     <style>
@@ -26,7 +29,7 @@
             background-color: #e5e5e5; 
             background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
             color: #1c1917;
-            padding-top: env(safe-area-inset-top);
+            /* [修正] 移除這裡的 padding-top，改由各個區塊自己控制，以解決 Sticky Header 被擋住的問題 */
             padding-bottom: env(safe-area-inset-bottom);
             -webkit-tap-highlight-color: transparent;
             user-select: none;
@@ -34,7 +37,29 @@
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; position: relative; background-color: transparent; padding-bottom: 80px; }
         ::-webkit-scrollbar { display: none; }
 
-        /* 大理石卡片 */
+        /* [新增] 首頁專用的頂部間距，避開瀏海 */
+        .home-safe-padding {
+            padding-top: calc(env(safe-area-inset-top) + 20px);
+        }
+
+        /* [新增] 修正後的置頂標題樣式 */
+        .sticky-header-safe {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background-color: #e5e5e5; /* 與背景同色，遮擋下方滾動內容 */
+            /* 關鍵：高度包含安全區域，並多加一點緩衝 */
+            padding-top: calc(env(safe-area-inset-top) + 10px);
+            padding-bottom: 10px;
+            padding-left: 1rem;
+            padding-right: 1rem;
+            /* 讓標題往左右延伸，蓋住原本 container 的 padding */
+            margin-left: -1rem;
+            margin-right: -1rem;
+            /* 加一點陰影讓層次更明顯 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
+        }
+
         .card-marble {
             background-color: #ffffff;
             border: 3px solid #1c1917;
@@ -49,7 +74,6 @@
             box-shadow: 3px 3px 0px #1c1917;
         }
         
-        /* 首頁選單 */
         .menu-icon {
             display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 1.2rem; height: 130px; position: relative; overflow: hidden;
         }
@@ -58,43 +82,31 @@
         .menu-icon span { font-weight: 900; text-transform: uppercase; font-size: 1.1rem; letter-spacing: 0.5px; line-height: 1; }
         .menu-icon .subtitle { font-size: 0.7rem; font-weight: 700; color: #78716c; margin-top: 4px; }
 
-        /* 頁面切換 */
         .hidden-view { display: none; }
         .active-view { display: block; animation: slideIn 0.2s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: 0; } }
 
-        /* 時間軸 */
+        .timeline-item { position: relative; }
         .timeline-line { position: absolute; left: 19px; top: 24px; bottom: -10px; width: 3px; background: #d6d3d1; z-index: 0; }
         .timeline-dot { position: absolute; left: 11px; top: 24px; width: 19px; height: 19px; background: #1c1917; border: 3px solid #f97316; border-radius: 50%; z-index: 10; }
         .timeline-content-wrapper { padding-left: 50px; position: relative; }
         
-        /* 拖曳專用 */
         .sortable-ghost { opacity: 0.2; background: #e7e5e4; border: 2px dashed #1c1917; }
-        .sortable-drag { opacity: 0.95; transform: scale(1.02); z-index: 50; }
+        .sortable-drag { opacity: 0.9; transform: scale(1.02); z-index: 50; background: white; }
         
-        /* 關鍵：手把設定 */
-        .drag-handle { 
-            touch-action: none; /* 防止原生捲動干擾拖曳啟動 */
-            cursor: grab; 
-            padding: 8px; 
-            color: #d6d3d1; /* 預設淡灰色 */
-        }
-        .drag-handle:active { cursor: grabbing; color: #f97316; } /* 按下變橘色 */
+        .drag-handle { touch-action: none; cursor: grab; padding: 8px; color: #d6d3d1; }
+        .drag-handle:active { cursor: grabbing; color: #f97316; }
         
-        /* 備忘錄內容 */
         .memo-content { white-space: pre-wrap; word-break: break-word; font-size: 0.9rem; line-height: 1.5; color: #44403c; }
 
-        /* FAB 計算機 (預設隱藏) */
         .fab-calc {
             position: fixed; bottom: 40px; right: 20px; width: 64px; height: 64px; border-radius: 50%;
             background: #f97316; border: 3px solid #1c1917; color: white;
-            display: none; 
-            align-items: center; justify-content: center;
+            display: none; align-items: center; justify-content: center;
             box-shadow: 4px 4px 0px #1c1917; z-index: 50; transition: transform 0.1s;
         }
         .fab-calc:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #1c1917; }
 
-        /* 按鈕與共用元件 */
         .flow-btn-container { margin-top: 30px; margin-bottom: 20px; display: flex; justify-content: center; width: 100%; }
         
         .big-action-btn {
@@ -107,13 +119,12 @@
         .big-action-btn:active { transform: scale(0.98); box-shadow: 2px 2px 0px rgba(0,0,0,0.1); }
         .btn-orange { background: #f97316; border-color: #c2410c; color: white; }
 
-        .header-bar { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; } /* padding 由 sticky-header-safe 控制 */
         .back-btn { width: 40px; height: 40px; border: 2px solid #1c1917; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0px #1c1917; }
         
         .date-tab { flex-shrink: 0; width: 60px; height: 64px; border: 2px solid #1c1917; background: white; color: #1c1917; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; cursor: pointer; transition: all 0.2s; box-shadow: 3px 3px 0px #a8a29e; border-radius: 12px; }
         .date-tab.active { background: #1c1917; color: #f97316; box-shadow: 3px 3px 0px #f97316; transform: translate(-1px, -1px); }
         
-        /* Checkbox */
         .checkbox-custom { 
             appearance: none; width: 24px; height: 24px; border: 2px solid #1c1917; background: white; 
             display: grid; place-content: center; cursor: pointer; flex-shrink: 0; border-radius: 6px; 
@@ -138,14 +149,14 @@
 </head>
 <body>
 
-<!-- 錯誤提示區 -->
 <div id="error-toast" style="display:none; position:fixed; top:0; left:0; right:0; background:red; color:white; padding:10px; z-index:9999; font-size:12px; font-weight:bold; text-align:center;"></div>
 
 <div class="app-container p-4">
     
-    <!-- ==================== 0. 首頁 ==================== -->
-    <div id="view-home" class="active-view">
-        <header class="mb-6 mt-4 flex justify-between items-start">
+    <!-- 0. 首頁 -->
+    <!-- [修正] 加上 home-safe-padding 確保首頁內容不會被瀏海擋住 -->
+    <div id="view-home" class="active-view home-safe-padding">
+        <header class="mb-6 flex justify-between items-start">
             <div>
                 <div class="text-xs font-black tracking-[0.2em] text-orange-600 mb-1">TRAVEL PLANNER</div>
                 <h1 class="text-5xl font-black text-stone-900 tracking-tighter italic">TOKYO<span class="text-orange-500">.</span></h1>
@@ -154,14 +165,12 @@
                     <span id="auth-status-text">ONLINE</span>
                 </div>
             </div>
-            <!-- 純計算機 -->
             <button onclick="window.app && window.app.openCalculator()" style="width:56px; height:56px; background:#f97316; color:white; border:2px solid #1c1917; border-radius:16px; box-shadow:3px 3px 0 #1c1917; display:flex; align-items:center; justify-content:center;" class="active:translate-y-1 active:shadow-none transition-all">
                 <i data-lucide="calculator" class="w-7 h-7"></i>
             </button>
         </header>
 
         <div class="grid grid-cols-2 gap-4">
-            <!-- 行程 -->
             <button onclick="window.app && window.app.switchView('itinerary')" class="card-marble col-span-2 flex flex-row gap-4 items-center p-6 h-40 bg-stone-50 hover:bg-stone-100 relative overflow-hidden active:scale-95 transition-transform">
                 <div class="bg-stone-900 text-white p-4 rounded-full border-2 border-stone-900 z-10 w-16 h-16 flex items-center justify-center mb-4">
                     <i data-lucide="map" class="w-8 h-8 !text-white !m-0"></i>
@@ -173,21 +182,18 @@
                 <div class="absolute -right-10 -top-10 w-48 h-48 bg-orange-500 rounded-full opacity-10 z-0"></div>
             </button>
 
-            <!-- 慾望清單 -->
             <button onclick="window.app && window.app.switchView('wishlist')" class="card-marble menu-icon hover:bg-stone-100 bg-white active:bg-stone-200">
                 <i data-lucide="heart"></i>
                 <span class="text-stone-900">WISHLIST</span>
                 <div class="subtitle">慾望清單</div>
             </button>
 
-            <!-- 行李 -->
             <button onclick="window.app && window.app.switchView('packing')" class="card-marble menu-icon hover:bg-stone-100 bg-white active:bg-stone-200">
                 <i data-lucide="luggage"></i>
                 <span class="text-stone-900">PACKING</span>
                 <div class="subtitle">行李清單</div>
             </button>
 
-            <!-- 必買清單 -->
             <button onclick="window.app && window.app.switchView('mustbuy')" class="card-marble menu-icon hover:bg-stone-100 bg-white active:bg-stone-200">
                 <i data-lucide="shopping-bag"></i>
                 <span class="text-stone-900">MUST BUY</span>
@@ -202,12 +208,12 @@
         </div>
     </div>
 
-    <!-- ==================== 1. 行程 ==================== -->
+    <!-- 1. 行程 -->
     <div id="view-itinerary" class="hidden-view">
-        <div class="header-bar sticky top-0 bg-[#e5e5e5] z-20 pt-2">
+        <!-- [修正] 使用 sticky-header-safe 確保標題在頂部時有正確的背景和安全間距 -->
+        <div class="sticky-header-safe header-bar">
             <button onclick="window.app.goHome()" class="back-btn"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
             <h2 class="font-black text-2xl tracking-tight text-stone-900">ITINERARY</h2>
-            <!-- 導航切換 -->
             <div class="flex gap-2 bg-white/80 backdrop-blur p-1.5 rounded-2xl border-2 border-stone-200">
                 <button onclick="window.app.switchView('wishlist')" class="w-10 h-10 flex items-center justify-center rounded-xl border-2 border-stone-200 bg-white text-stone-400"><i data-lucide="heart" class="w-5 h-5"></i></button>
                 <button onclick="window.app.switchView('mustbuy')" class="w-10 h-10 flex items-center justify-center rounded-xl border-2 border-stone-200 bg-white text-stone-400"><i data-lucide="shopping-bag" class="w-5 h-5"></i></button>
@@ -227,6 +233,7 @@
 
         <div id="section-itinerary" class="pt-4">
             <div id="list-itinerary" class="pl-2 relative space-y-6 min-h-[200px]"></div>
+            
             <div id="btn-itin-add-container" class="flow-btn-container">
                  <button onclick="window.app.openItineraryModal()" class="big-action-btn btn-orange">
                     <i data-lucide="plus-circle" class="w-5 h-5"></i> 新增行程
@@ -235,9 +242,10 @@
         </div>
     </div>
 
-    <!-- ==================== 2. 行李 ==================== -->
+    <!-- 2. 行李 -->
     <div id="view-packing" class="hidden-view">
-        <div class="header-bar sticky top-0 bg-[#e5e5e5] z-20 pt-2">
+        <!-- [修正] 同步套用 safe header -->
+        <div class="sticky-header-safe header-bar">
             <button onclick="window.app.goHome()" class="back-btn"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
             <h2 class="font-black text-2xl tracking-tight text-stone-900">PACKING</h2>
             <div class="flex gap-2 bg-white/80 backdrop-blur p-1.5 rounded-2xl border-2 border-stone-200">
@@ -245,6 +253,7 @@
             </div>
         </div>
         <div id="packing-container" class="space-y-6"></div>
+
         <div class="flow-btn-container">
              <button onclick="document.getElementById('dialog-packing').showModal()" class="big-action-btn hover:bg-stone-100 transition-colors">
                 <i data-lucide="package-plus" class="w-5 h-5"></i> 新增物品
@@ -252,9 +261,10 @@
         </div>
     </div>
 
-    <!-- ==================== 3. 慾望清單 ==================== -->
+    <!-- 3. 慾望清單 -->
     <div id="view-wishlist" class="hidden-view">
-        <div class="header-bar sticky top-0 bg-[#e5e5e5] z-20 pt-2">
+        <!-- [修正] 同步套用 safe header -->
+        <div class="sticky-header-safe header-bar">
             <button onclick="window.app.goHome()" class="back-btn"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
             <h2 class="font-black text-2xl tracking-tight text-stone-900">WISHLIST</h2>
             <div class="flex gap-2 bg-white/80 backdrop-blur p-1.5 rounded-2xl border-2 border-stone-200">
@@ -262,17 +272,20 @@
                 <button onclick="window.app.switchView('mustbuy')" class="w-10 h-10 flex items-center justify-center rounded-xl border-2 border-stone-200 bg-white text-stone-400"><i data-lucide="shopping-bag" class="w-5 h-5"></i></button>
             </div>
         </div>
+
         <div id="list-wishlist" class="space-y-6"></div>
+
         <div class="flow-btn-container">
-             <button onclick="document.getElementById('dialog-wishlist').showModal()" class="big-action-btn hover:bg-stone-100 transition-colors">
+             <button onclick="window.app.openWishlistModal()" class="big-action-btn hover:bg-stone-100 transition-colors">
                 <i data-lucide="heart-handshake" class="w-5 h-5"></i> 新增慾望
              </button>
         </div>
     </div>
 
-    <!-- ==================== 4. 必買清單 ==================== -->
+    <!-- 4. 必買清單 -->
     <div id="view-mustbuy" class="hidden-view">
-        <div class="header-bar sticky top-0 bg-[#e5e5e5] z-20 pt-2">
+        <!-- [修正] 同步套用 safe header -->
+        <div class="sticky-header-safe header-bar">
             <button onclick="window.app.goHome()" class="back-btn"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
             <h2 class="font-black text-2xl tracking-tight text-stone-900">MUST BUY</h2>
             <div class="flex gap-2 bg-white/80 backdrop-blur p-1.5 rounded-2xl border-2 border-stone-200">
@@ -280,9 +293,11 @@
                 <button onclick="window.app.switchView('wishlist')" class="w-10 h-10 flex items-center justify-center rounded-xl border-2 border-stone-200 bg-white text-stone-400"><i data-lucide="heart" class="w-5 h-5"></i></button>
             </div>
         </div>
+        
         <div id="list-mustbuy" class="space-y-3"></div>
+
         <div class="flow-btn-container">
-             <button onclick="document.getElementById('dialog-mustbuy').showModal()" class="big-action-btn hover:bg-stone-100 transition-colors">
+             <button onclick="window.app.openMustBuyModal()" class="big-action-btn hover:bg-stone-100 transition-colors">
                 <i data-lucide="shopping-cart" class="w-5 h-5"></i> 新增必買
              </button>
         </div>
@@ -290,12 +305,12 @@
 
 </div>
 
-<!-- FAB -->
+<!-- FAB (純計算機) -->
 <button id="fab-calc" onclick="window.app && window.app.openCalculator()" class="fab-calc hidden">
     <i data-lucide="calculator" class="w-8 h-8"></i>
 </button>
 
-<!-- 錯誤提示彈窗 -->
+<!-- 錯誤提示 -->
 <dialog id="dialog-alert" class="bg-white rounded-[24px] p-5 m-2 shadow-2xl border-4 border-stone-900 w-80">
     <div class="text-center">
         <h3 class="font-black text-xl text-stone-900 mb-2">NOTICE</h3>
@@ -376,10 +391,9 @@
             </div>
             <div class="flex gap-3">
                 <div class="w-1/3">
-                     <label class="text-[10px] font-bold text-stone-400 uppercase block mb-1">Start Time</label>
+                     <label class="text-[10px] font-bold text-stone-400 uppercase block mb-1">Time</label>
                      <input type="time" id="itin-time" class="bg-stone-50 p-3 rounded-xl w-full text-center font-bold outline-none border border-stone-200 focus:border-stone-900">
                 </div>
-                <!-- 新增：結束時間 -->
                 <div class="w-1/3">
                      <label class="text-[10px] font-bold text-stone-400 uppercase block mb-1">End Time</label>
                      <input type="time" id="itin-end-time" class="bg-stone-50 p-3 rounded-xl w-full text-center font-bold outline-none border border-stone-200 focus:border-stone-900">
@@ -390,6 +404,7 @@
                         <option value="景點">📍 景點</option>
                         <option value="美食">🍴 美食</option>
                         <option value="購物">🛍️ 購物</option>
+                        <option value="住宿">🛏️ 住宿</option>
                         <option value="交通">🚌 交通</option>
                         <option value="航班">✈️ 航班</option>
                     </select>
@@ -432,12 +447,17 @@
 <dialog id="dialog-wishlist">
     <div class="bg-white rounded-[24px] p-5 m-2 shadow-2xl border-2 border-stone-200">
          <div class="flex justify-between items-center mb-4">
-            <h3 class="font-black text-xl text-stone-800">ADD WISH</h3>
+            <h3 class="font-black text-xl text-stone-800">WISH ITEM</h3>
             <button type="button" onclick="document.getElementById('dialog-wishlist').close()" class="p-2 bg-stone-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
          </div>
          <form onsubmit="window.app.saveWishlist(event)" class="space-y-3">
+             <input type="hidden" id="wish-id">
              <input type="text" id="wish-location" placeholder="地點 (例: 道頓崛)" class="w-full bg-stone-50 p-4 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900" required>
              <input type="text" id="wish-item" placeholder="項目 (例: 章魚燒)" class="w-full bg-stone-50 p-4 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900" required>
+             <div class="relative">
+                <i data-lucide="map-pin" class="absolute left-3 top-3.5 w-4 h-4 text-stone-400"></i>
+                <input type="text" id="wish-link" placeholder="Google Maps 連結 或 備註" class="w-full bg-stone-50 p-3 pl-10 rounded-xl text-sm outline-none border border-stone-200 focus:border-stone-900 font-bold">
+            </div>
              <div class="flex gap-2">
                  <label class="flex-1 bg-stone-50 border-2 border-stone-200 rounded-xl p-3 flex items-center justify-center cursor-pointer has-[:checked]:border-stone-900 has-[:checked]:bg-stone-100">
                      <input type="radio" name="wish-type" value="eat" checked class="hidden">
@@ -448,7 +468,7 @@
                      <span class="font-bold text-sm"><i data-lucide="shopping-bag" class="w-4 h-4 inline mr-1"></i> BUY</span>
                  </label>
              </div>
-             <button type="submit" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg shadow-[4px_4px_0px_#f97316] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all border-2 border-stone-900 mt-2">ADD</button>
+             <button type="submit" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg shadow-[4px_4px_0px_#f97316] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all border-2 border-stone-900 mt-2">SAVE</button>
          </form>
     </div>
 </dialog>
@@ -457,13 +477,14 @@
 <dialog id="dialog-mustbuy">
     <div class="bg-white rounded-[24px] p-5 m-2 shadow-2xl border-2 border-stone-200">
          <div class="flex justify-between items-center mb-4">
-            <h3 class="font-black text-xl text-stone-800">ADD MUST BUY</h3>
+            <h3 class="font-black text-xl text-stone-800">MUST BUY ITEM</h3>
             <button type="button" onclick="document.getElementById('dialog-mustbuy').close()" class="p-2 bg-stone-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
          </div>
          <form onsubmit="window.app.saveMustBuy(event)" class="space-y-3">
+             <input type="hidden" id="mb-id">
              <input type="text" id="mb-name" placeholder="商品名稱" class="w-full bg-stone-50 p-4 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900" required>
              <input type="text" id="mb-details" placeholder="圖片連結 或 文字備註" class="w-full bg-stone-50 p-4 rounded-xl text-sm outline-none border border-stone-200 focus:border-stone-900">
-             <button type="submit" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg shadow-[4px_4px_0px_#f97316] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all border-2 border-stone-900 mt-2">ADD</button>
+             <button type="submit" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg shadow-[4px_4px_0px_#f97316] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all border-2 border-stone-900 mt-2">SAVE</button>
          </form>
     </div>
 </dialog>
@@ -478,6 +499,8 @@
         return false;
     };
 
+    // [回復] 為了讓 GitHub Pages 能夠運作，我們必須把設定檔寫回來
+    // 這是前端網頁的標準做法，安全性由 Firebase 後台規則控制
     const firebaseConfig = {
       apiKey: "AIzaSyCFbodSlPH_CBmQrISVVyyBgQmn7golSZI",
       authDomain: "travel-fc0fd.firebaseapp.com",
@@ -501,10 +524,13 @@
         setTimeout(() => { document.getElementById('alert-msg').innerText = "資料庫連線失敗"; document.getElementById('dialog-alert').showModal(); }, 500);
     }
     
-    const TRIP_ID = "tokyo_trip_shared";
+    // [共用設定] 這裡設定了固定的 App ID，讓你跟男友能連到同一個資料庫
+    const appId = 'tokyo-trip-shared-v1';
     let userId = null;
     let activeDate = '2025-12-14';
     let cachedItinerary = [];
+    let cachedWishlist = [];
+    let cachedMustBuy = [];
     let memoList = []; 
     let calcVal = '0';
     let currentRate = 0.22;
@@ -539,6 +565,15 @@
             document.getElementById('dialog-alert').showModal();
         },
 
+        // [共用設定] 資料存取路徑改為 'public/data'，實現多人共用編輯
+        getCol(name) { 
+            return collection(db, 'artifacts', appId, 'public', 'data', name);
+        },
+        
+        getDocRef(colName, docId) {
+            return doc(db, 'artifacts', appId, 'public', 'data', colName, docId);
+        },
+
         switchView(view) {
             document.getElementById('view-home').classList.add('hidden-view');
             document.getElementById('view-home').classList.remove('active-view');
@@ -551,7 +586,6 @@
                 }
             });
 
-            // FIX: 首頁不顯示 FAB，內頁才顯示
             const fab = document.getElementById('fab-calc');
             if(view === 'view-home') fab.style.display = 'none';
             else fab.style.display = 'flex';
@@ -564,14 +598,11 @@
             document.querySelectorAll('.active-view').forEach(el => { el.classList.add('hidden-view'); el.classList.remove('active-view'); });
             document.getElementById('view-home').classList.remove('hidden-view');
             document.getElementById('view-home').classList.add('active-view');
-            // FIX: 首頁隱藏 FAB
             document.getElementById('fab-calc').style.display = 'none';
         },
 
-        getCol(name) { return collection(db, `trips/${TRIP_ID}/${name}`); },
-
         startListeners() {
-            if(!db) return;
+            if(!db || !userId) return;
             try {
                 const qItin = query(this.getCol('itinerary'), orderBy('date'));
                 onSnapshot(qItin, (snap) => {
@@ -579,8 +610,13 @@
                     cachedItinerary.sort((a, b) => {
                         const d = a.date.localeCompare(b.date);
                         if(d !== 0) return d;
+                        
+                        const tA = a.time || '';
+                        const tB = b.time || '';
+                        if (tA !== tB) return tA.localeCompare(tB);
+
                         if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
-                        return (a.time||'').localeCompare(b.time||'');
+                        return 0;
                     });
                     this.renderItinerary();
                 });
@@ -590,8 +626,16 @@
                     this.renderMemo(memoList);
                 });
                 onSnapshot(query(this.getCol('packing')), (snap) => this.renderPacking(snap.docs.map(d=>({id:d.id, ...d.data()}))));
-                onSnapshot(query(this.getCol('wishlist'), orderBy('createdAt')), (snap) => this.renderWishlist(snap.docs.map(d=>({id:d.id, ...d.data()}))));
-                onSnapshot(query(this.getCol('mustbuy'), orderBy('createdAt')), (snap) => this.renderMustBuy(snap.docs.map(d=>({id:d.id, ...d.data()}))));
+                
+                onSnapshot(query(this.getCol('wishlist'), orderBy('createdAt')), (snap) => {
+                    cachedWishlist = snap.docs.map(d=>({id:d.id, ...d.data()}));
+                    this.renderWishlist(cachedWishlist);
+                });
+                
+                onSnapshot(query(this.getCol('mustbuy'), orderBy('createdAt')), (snap) => {
+                    cachedMustBuy = snap.docs.map(d=>({id:d.id, ...d.data()}));
+                    this.renderMustBuy(cachedMustBuy);
+                });
             } catch(e) { console.error("Listener init failed", e); }
         },
 
@@ -635,19 +679,22 @@
                 if(items.length === 0) html += `<div class="text-stone-400 text-center py-10 font-bold">NO PLANS YET</div>`;
                 
                 items.forEach(item => {
-                    // Shared Handle HTML
                     const handleHtml = `<div class="drag-handle absolute right-2 top-2 p-2 touch-none cursor-grab hover:bg-stone-100 rounded-full transition-colors"><i data-lucide="menu" class="w-5 h-5 text-stone-300"></i></div>`;
-                    const mapBtn = item.map ? `<div class="flex gap-2 mt-3"><a href="${item.map}" target="_blank" onclick="event.stopPropagation()" class="w-full bg-stone-100 hover:bg-stone-900 hover:text-white text-stone-600 py-3 rounded-lg text-xs font-black border border-stone-200 transition-colors flex items-center justify-center tracking-wider shadow-sm gap-2"><i data-lucide="map" class="w-3 h-3"></i> MAP ↗</a></div>` : '';
+                    
+                    const hasNote = item.note && item.note.trim().length > 0;
+                    const noteId = `note-${item.id}`;
+                    const noteIndicator = hasNote ? `<button onclick="event.stopPropagation(); document.getElementById('${noteId}').classList.toggle('hidden')" class="ml-2 text-orange-400 hover:text-orange-600 transition-colors p-1"><i data-lucide="sticky-note" class="w-4 h-4"></i></button>` : '';
+                    const noteHtml = hasNote ? `<div id="${noteId}" class="hidden mt-3 text-sm text-stone-600 font-medium border-l-2 border-orange-200 pl-2 whitespace-pre-wrap animate-fade-in">${item.note}</div>` : '';
 
                     if(item.cat === '航班') {
                          html += `
                          <div class="timeline-item group" data-id="${item.id}" onclick="window.app.openItineraryModal('${item.id}')">
                             <div class="timeline-line"></div>
-                            <div class="bg-white border-2 border-stone-900 rounded-2xl p-4 relative shadow-[4px_4px_0px_#fcd34d] mb-6 ticket-card ml-8">
+                            <div class="bg-white border-2 border-stone-900 rounded-2xl p-4 relative shadow-[4px_4px_0px_#fcd34d] mb-6 ticket-card ml-8 active:scale-98 transition-transform cursor-pointer">
                                 ${handleHtml}
                                 <div class="flex justify-between items-center mb-4 border-b-2 border-dashed border-stone-300 pb-2">
-                                    <div class="font-mono font-bold text-stone-500 text-xs">FLIGHT TICKET</div>
-                                    <div class="font-mono font-black text-stone-300 text-xs tracking-widest uppercase">BOARDING PASS</div>
+                                    <div class="font-mono font-bold text-stone-500 text-xs flex items-center">FLIGHT TICKET ${noteIndicator}</div>
+                                    <div class="font-mono font-black text-stone-300 text-xs tracking-widest uppercase pr-2">BOARDING PASS</div>
                                 </div>
                                 <div class="flex justify-between items-center mb-2">
                                     <div class="text-center">
@@ -666,6 +713,7 @@
                                 <div class="text-center mt-4 pt-2 border-t-2 border-dashed border-stone-100 font-bold text-stone-600 bg-stone-50 rounded-lg py-2">
                                     ${item.title || 'FLIGHT'}
                                 </div>
+                                ${noteHtml}
                             </div>
                          </div>`;
                     } else if(item.cat === '交通') {
@@ -673,20 +721,33 @@
                             <div class="timeline-line"></div>
                             <div class="flex items-center gap-3 mb-4 timeline-content-wrapper">
                                 <div class="w-12 h-12 bg-stone-900 rounded-full flex items-center justify-center text-white z-10 border-2 border-white flex-shrink-0 shadow-md"><i data-lucide="bus" class="w-6 h-6"></i></div>
-                                <div class="bg-stone-200 px-3 py-2 rounded-lg text-xs font-bold text-stone-600 flex-grow relative pr-10">
-                                    ${item.time} ${item.title} <span class="opacity-50 ml-1">${item.note||''}</span>
+                                <div class="bg-stone-200 px-3 py-2 rounded-lg text-xs font-bold text-stone-600 flex-grow relative pr-10 group active:scale-98 transition-transform cursor-pointer">
+                                    ${item.time} ${item.title} <span class="opacity-50 flex items-center inline-block align-middle">${noteIndicator}</span>
                                     <div class="drag-handle absolute right-1 top-1/2 -translate-y-1/2 p-2 touch-none cursor-grab"><i data-lucide="menu" class="w-4 h-4 text-stone-400"></i></div>
+                                    ${noteHtml}
                                 </div>
                             </div></div>`;
                     } else {
+                        const isHotel = item.cat === '住宿';
+                        const dotStyle = isHotel ? 'background:#f97316; border-color:#1c1917;' : '';
+                        
+                        const mapUrl = item.map ? item.map : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.title)}`;
+                        const mapBtn = `<div class="flex gap-2 mt-3"><a href="${mapUrl}" target="_blank" onclick="event.stopPropagation()" class="w-full bg-stone-100 hover:bg-stone-900 hover:text-white text-stone-600 py-3 rounded-lg text-xs font-black border border-stone-200 transition-colors flex items-center justify-center tracking-wider shadow-sm gap-2"><i data-lucide="map" class="w-3 h-3"></i> MAP ↗</a></div>`;
+
                         html += `<div class="timeline-item group cursor-pointer" data-id="${item.id}" onclick="window.app.openItineraryModal('${item.id}')">
                             <div class="timeline-line"></div>
-                            <div class="timeline-dot"></div>
+                            <div class="timeline-dot" style="${dotStyle}"></div>
                             <div class="flex gap-4 mb-6 timeline-content-wrapper">
                                 <div class="w-12 text-right pt-1 font-mono font-bold text-stone-600 text-sm flex-shrink-0">${item.time || ''}</div>
                                 <div class="flex-grow card-marble p-4 relative active:scale-98 transition-transform">
                                     ${handleHtml}
-                                    <div class="flex justify-between items-start mb-1"><h3 class="font-black text-xl uppercase leading-tight pr-8">${item.title}</h3></div><p class="text-xs font-bold text-stone-400 mb-3">#${item.cat}</p>${item.note ? `<p class="text-sm text-stone-600 font-medium mb-3 border-l-2 border-orange-200 pl-2 whitespace-pre-wrap">${item.note}</p>` : ''}${mapBtn}</div></div></div>`;
+                                    <div class="flex justify-between items-start mb-1"><h3 class="font-black text-xl uppercase leading-tight pr-8">${item.title}</h3></div>
+                                    <div class="text-xs font-bold text-stone-400 mb-1 flex items-center">#${item.cat} ${noteIndicator}</div>
+                                    ${noteHtml}
+                                    ${mapBtn}
+                                </div>
+                            </div>
+                        </div>`;
                     }
                 });
                 html += `</div>`;
@@ -752,17 +813,37 @@
                         <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i> ${loc}
                     </h3>
                     <div class="space-y-3">
-                        ${grouped[loc].map(i => `
-                            <div class="flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-stone-100">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center ${i.type==='eat'?'bg-orange-100 text-orange-600':'bg-stone-200 text-stone-600'}">
+                        ${grouped[loc].map(i => {
+                            let mapLink = '';
+                            if(i.link && i.link.trim() !== '') {
+                                const url = i.link.startsWith('http') ? i.link : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(i.location + ' ' + i.name)}`;
+                                mapLink = `<a href="${url}" target="_blank" onclick="event.stopPropagation()" class="text-[10px] font-black bg-stone-100 hover:bg-stone-900 hover:text-white text-stone-600 px-2 py-1 rounded ml-2 border border-stone-200 transition-colors">GO ↗</a>`;
+                            } else {
+                                const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(i.location + ' ' + i.name)}`;
+                                mapLink = `<a href="${searchUrl}" target="_blank" onclick="event.stopPropagation()" class="text-[10px] font-black bg-stone-100 hover:bg-stone-900 hover:text-white text-stone-600 px-2 py-1 rounded ml-2 border border-stone-200 transition-colors">GO ↗</a>`;
+                            }
+
+                            return `
+                            <div class="flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-stone-100 cursor-pointer hover:bg-stone-100 transition-colors group" onclick="window.app.openWishlistModal('${i.id}')">
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${i.type==='eat'?'bg-orange-100 text-orange-600':'bg-stone-200 text-stone-600'}">
                                         <i data-lucide="${i.type==='eat'?'utensils':'shopping-bag'}" class="w-4 h-4"></i>
                                     </div>
-                                    <span class="font-bold text-stone-800">${i.name}</span>
+                                    <div class="flex flex-col overflow-hidden">
+                                        <div class="flex items-center">
+                                            <span class="font-bold text-stone-800 truncate">${i.name}</span>
+                                            ${mapLink}
+                                        </div>
+                                        ${(i.link && !i.link.startsWith('http')) ? `<div class="text-xs text-stone-400 font-bold truncate">${i.link}</div>` : ''}
+                                    </div>
                                 </div>
-                                <button onclick="window.app.delDoc('wishlist', '${i.id}')" class="text-stone-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                <div class="flex-shrink-0 flex items-center">
+                                    <i data-lucide="pencil" class="w-4 h-4 text-stone-300 mr-3 group-hover:text-stone-500"></i>
+                                    <button onclick="event.stopPropagation(); window.app.delDoc('wishlist', '${i.id}')" class="text-stone-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
                             </div>
-                        `).join('')}
+                        `;
+                        }).join('')}
                     </div>
                 </div>
             `).join('');
@@ -771,7 +852,6 @@
 
         renderMustBuy(items) {
             const list = document.getElementById('list-mustbuy');
-            // 排序：未勾選在上方，已勾選在下方
             items.sort((a, b) => (a.checked === b.checked) ? 0 : a.checked ? 1 : -1);
             
             if(items.length === 0) { list.innerHTML = `<div class="text-center text-stone-400 font-bold py-10">NO ITEMS YET</div>`; return; }
@@ -782,9 +862,9 @@
                 if(hasDetails) {
                     const isUrl = i.details.startsWith('http');
                     if(isUrl) {
-                        detailContent = `<div id="mb-detail-${i.id}" class="hidden mt-3 rounded-lg overflow-hidden border-2 border-stone-900"><img src="${i.details}" class="w-full h-40 object-cover" onerror="this.style.display='none'"></div>`;
+                        detailContent = `<div class="mt-3 rounded-lg overflow-hidden border-2 border-stone-900"><img src="${i.details}" class="w-full h-40 object-cover" onerror="this.style.display='none'"></div>`;
                     } else {
-                        detailContent = `<div id="mb-detail-${i.id}" class="hidden mt-3 p-3 bg-orange-50 text-orange-800 font-bold text-sm rounded-lg border-l-4 border-orange-400">${i.details}</div>`;
+                        detailContent = `<div class="mt-3 p-3 bg-orange-50 text-orange-800 font-bold text-sm rounded-lg border-l-4 border-orange-400">${i.details}</div>`;
                     }
                 }
 
@@ -792,12 +872,15 @@
                 <div class="card-marble-sm bg-white p-3 flex flex-col transition-all ${i.checked ? 'item-checked bg-stone-100' : ''}">
                     <div class="flex items-center gap-3">
                         <input type="checkbox" class="checkbox-custom" ${i.checked?'checked':''} onchange="window.app.toggleMustBuy('${i.id}', this.checked)">
-                        <div class="flex-grow font-black text-lg text-stone-800 cursor-pointer" ${hasDetails ? `onclick="document.getElementById('mb-detail-${i.id}').classList.toggle('hidden')"` : ''}>
-                            ${i.name} ${hasDetails ? '<i data-lucide="chevron-down" class="w-4 h-4 inline text-stone-400 ml-1"></i>' : ''}
+                        <div class="flex-grow font-black text-lg text-stone-800 cursor-pointer hover:text-orange-600 transition-colors" onclick="document.getElementById('mb-detail-${i.id}') && document.getElementById('mb-detail-${i.id}').classList.toggle('hidden')">
+                            ${i.name} ${hasDetails ? '<i data-lucide="sticky-note" class="w-3 h-3 inline text-stone-400 ml-1 align-top"></i>' : ''}
                         </div>
-                        <button onclick="window.app.delDoc('mustbuy', '${i.id}')" class="text-stone-300 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <div class="flex items-center">
+                             <button onclick="event.stopPropagation(); window.app.openMustBuyModal('${i.id}')" class="text-stone-300 hover:text-stone-900 p-2"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                             <button onclick="window.app.delDoc('mustbuy', '${i.id}')" class="text-stone-300 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
                     </div>
-                    ${detailContent}
+                    ${hasDetails ? `<div id="mb-detail-${i.id}" class="hidden ml-9 transition-all">${detailContent}</div>` : ''}
                 </div>
             `}).join('');
             if(window.lucide) window.lucide.createIcons();
@@ -817,7 +900,7 @@
                     document.getElementById('itin-id').value = item.id;
                     document.getElementById('itin-date').value = item.date;
                     document.getElementById('itin-time').value = item.time;
-                    document.getElementById('itin-end-time').value = item.endTime || ''; // 載入結束時間
+                    document.getElementById('itin-end-time').value = item.endTime || '';
                     document.getElementById('itin-cat').value = item.cat;
                     document.getElementById('itin-title').value = item.title;
                     document.getElementById('itin-note').value = item.note;
@@ -841,6 +924,37 @@
             }
             document.getElementById('dialog-memo').showModal();
         },
+        openWishlistModal(id=null) {
+            const form = document.querySelector('#dialog-wishlist form');
+            form.reset();
+            document.getElementById('wish-id').value = '';
+            if(id) {
+                const item = cachedWishlist.find(i => i.id === id);
+                if(item) {
+                    document.getElementById('wish-id').value = item.id;
+                    document.getElementById('wish-location').value = item.location;
+                    document.getElementById('wish-item').value = item.name;
+                    document.getElementById('wish-link').value = item.link || '';
+                    const radio = form.querySelector(`input[name="wish-type"][value="${item.type}"]`);
+                    if(radio) radio.checked = true;
+                }
+            }
+            document.getElementById('dialog-wishlist').showModal();
+        },
+        openMustBuyModal(id=null) {
+            const form = document.querySelector('#dialog-mustbuy form');
+            form.reset();
+            document.getElementById('mb-id').value = '';
+            if(id) {
+                const item = cachedMustBuy.find(i => i.id === id);
+                if(item) {
+                    document.getElementById('mb-id').value = item.id;
+                    document.getElementById('mb-name').value = item.name;
+                    document.getElementById('mb-details').value = item.details || '';
+                }
+            }
+            document.getElementById('dialog-mustbuy').showModal();
+        },
         openCalculator() { document.getElementById('dialog-calculator').showModal(); },
         
         async saveMemo() { 
@@ -852,7 +966,7 @@
                 if(id) {
                     await updateDoc(doc(db, `trips/${TRIP_ID}/memos`, id), { title, content });
                 } else {
-                    await addDoc(this.getCol('memos'), { title, content, createdAt: serverTimestamp() }); 
+                    await addDoc(uiApp.getCol('memos'), { title, content, createdAt: serverTimestamp() }); 
                 }
                 document.getElementById('dialog-memo').close();
             } catch(e) { console.error(e); uiApp.showCustomAlert("儲存失敗: " + e.message); } 
@@ -887,10 +1001,10 @@
         },
 
         toggleCurrency() {
-            this.calcMode = this.calcMode === 'JPY_TWD' ? 'TWD_JPY' : 'JPY_TWD';
-            document.getElementById('calc-mode-text').innerText = this.calcMode === 'JPY_TWD' ? 'JPY → TWD' : 'TWD → JPY';
-            document.getElementById('calc-input-unit').innerText = this.calcMode === 'JPY_TWD' ? 'JPY' : 'TWD';
-            document.getElementById('calc-output-unit').innerText = this.calcMode === 'JPY_TWD' ? 'TWD' : 'JPY';
+            calcMode = calcMode === 'JPY_TWD' ? 'TWD_JPY' : 'JPY_TWD';
+            document.getElementById('calc-mode-text').innerText = calcMode === 'JPY_TWD' ? 'JPY → TWD' : 'TWD → JPY';
+            document.getElementById('calc-input-unit').innerText = calcMode === 'JPY_TWD' ? 'JPY' : 'TWD';
+            document.getElementById('calc-output-unit').innerText = calcMode === 'JPY_TWD' ? 'TWD' : 'JPY';
             this.updateCalc();
         },
         calcAppend(n) { if(calcVal==='0'&&n!=='.')calcVal=''; if(n==='.'&&calcVal.includes('.'))return; calcVal+=n; this.updateCalc(); },
@@ -900,7 +1014,7 @@
             document.getElementById('calc-display').value = Number(calcVal).toLocaleString(); 
             const val = parseFloat(calcVal||0);
             let res = 0;
-            if (this.calcMode === 'JPY_TWD') res = Math.round(val * currentRate);
+            if (calcMode === 'JPY_TWD') res = Math.round(val * currentRate);
             else res = Math.round(val / currentRate);
             document.getElementById('calc-res').innerText = res.toLocaleString(); 
         },
