@@ -29,7 +29,6 @@
             background-color: #e5e5e5; 
             background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
             color: #1c1917;
-            /* [修正] 移除這裡的 padding-top，改由各個區塊自己控制，以解決 Sticky Header 被擋住的問題 */
             padding-bottom: env(safe-area-inset-bottom);
             -webkit-tap-highlight-color: transparent;
             user-select: none;
@@ -37,12 +36,12 @@
         .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; position: relative; background-color: transparent; padding-bottom: 80px; }
         ::-webkit-scrollbar { display: none; }
 
-        /* [新增] 首頁專用的頂部間距，避開瀏海 */
+        /* 首頁專用的頂部間距，避開瀏海 */
         .home-safe-padding {
             padding-top: calc(env(safe-area-inset-top) + 20px);
         }
 
-        /* [新增] 修正後的置頂標題樣式 */
+        /* 修正後的置頂標題樣式 */
         .sticky-header-safe {
             position: sticky;
             top: 0;
@@ -102,11 +101,13 @@
         .fab-calc {
             position: fixed; bottom: 40px; right: 20px; width: 64px; height: 64px; border-radius: 50%;
             background: #f97316; border: 3px solid #1c1917; color: white;
-            display: none; align-items: center; justify-content: center;
+            display: none; 
+            align-items: center; justify-content: center;
             box-shadow: 4px 4px 0px #1c1917; z-index: 50; transition: transform 0.1s;
         }
         .fab-calc:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #1c1917; }
 
+        /* 按鈕與共用元件 */
         .flow-btn-container { margin-top: 30px; margin-bottom: 20px; display: flex; justify-content: center; width: 100%; }
         
         .big-action-btn {
@@ -125,6 +126,7 @@
         .date-tab { flex-shrink: 0; width: 60px; height: 64px; border: 2px solid #1c1917; background: white; color: #1c1917; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; cursor: pointer; transition: all 0.2s; box-shadow: 3px 3px 0px #a8a29e; border-radius: 12px; }
         .date-tab.active { background: #1c1917; color: #f97316; box-shadow: 3px 3px 0px #f97316; transform: translate(-1px, -1px); }
         
+        /* Checkbox */
         .checkbox-custom { 
             appearance: none; width: 24px; height: 24px; border: 2px solid #1c1917; background: white; 
             display: grid; place-content: center; cursor: pointer; flex-shrink: 0; border-radius: 6px; 
@@ -149,12 +151,12 @@
 </head>
 <body>
 
+<!-- 錯誤提示區 -->
 <div id="error-toast" style="display:none; position:fixed; top:0; left:0; right:0; background:red; color:white; padding:10px; z-index:9999; font-size:12px; font-weight:bold; text-align:center;"></div>
 
 <div class="app-container p-4">
     
-    <!-- 0. 首頁 -->
-    <!-- [修正] 加上 home-safe-padding 確保首頁內容不會被瀏海擋住 -->
+    <!-- ==================== 0. 首頁 ==================== -->
     <div id="view-home" class="active-view home-safe-padding">
         <header class="mb-6 flex justify-between items-start">
             <div>
@@ -165,12 +167,14 @@
                     <span id="auth-status-text">ONLINE</span>
                 </div>
             </div>
+            <!-- 純計算機 -->
             <button onclick="window.app && window.app.openCalculator()" style="width:56px; height:56px; background:#f97316; color:white; border:2px solid #1c1917; border-radius:16px; box-shadow:3px 3px 0 #1c1917; display:flex; align-items:center; justify-content:center;" class="active:translate-y-1 active:shadow-none transition-all">
                 <i data-lucide="calculator" class="w-7 h-7"></i>
             </button>
         </header>
 
         <div class="grid grid-cols-2 gap-4">
+            <!-- 行程 -->
             <button onclick="window.app && window.app.switchView('itinerary')" class="card-marble col-span-2 flex flex-row gap-4 items-center p-6 h-40 bg-stone-50 hover:bg-stone-100 relative overflow-hidden active:scale-95 transition-transform">
                 <div class="bg-stone-900 text-white p-4 rounded-full border-2 border-stone-900 z-10 w-16 h-16 flex items-center justify-center mb-4">
                     <i data-lucide="map" class="w-8 h-8 !text-white !m-0"></i>
@@ -182,18 +186,21 @@
                 <div class="absolute -right-10 -top-10 w-48 h-48 bg-orange-500 rounded-full opacity-10 z-0"></div>
             </button>
 
+            <!-- 慾望清單 (WISHLIST) -->
             <button onclick="window.app && window.app.switchView('wishlist')" class="card-marble menu-icon hover:bg-stone-100 bg-white active:bg-stone-200">
                 <i data-lucide="heart"></i>
                 <span class="text-stone-900">WISHLIST</span>
                 <div class="subtitle">慾望清單</div>
             </button>
 
+            <!-- 行李 (PACKING) -->
             <button onclick="window.app && window.app.switchView('packing')" class="card-marble menu-icon hover:bg-stone-100 bg-white active:bg-stone-200">
                 <i data-lucide="luggage"></i>
                 <span class="text-stone-900">PACKING</span>
                 <div class="subtitle">行李清單</div>
             </button>
 
+            <!-- 必買清單 (MUST BUY) -->
             <button onclick="window.app && window.app.switchView('mustbuy')" class="card-marble menu-icon hover:bg-stone-100 bg-white active:bg-stone-200">
                 <i data-lucide="shopping-bag"></i>
                 <span class="text-stone-900">MUST BUY</span>
@@ -208,12 +215,12 @@
         </div>
     </div>
 
-    <!-- 1. 行程 -->
+    <!-- ==================== 1. 行程 ==================== -->
     <div id="view-itinerary" class="hidden-view">
-        <!-- [修正] 使用 sticky-header-safe 確保標題在頂部時有正確的背景和安全間距 -->
         <div class="sticky-header-safe header-bar">
             <button onclick="window.app.goHome()" class="back-btn"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
             <h2 class="font-black text-2xl tracking-tight text-stone-900">ITINERARY</h2>
+            <!-- 導航切換 -->
             <div class="flex gap-2 bg-white/80 backdrop-blur p-1.5 rounded-2xl border-2 border-stone-200">
                 <button onclick="window.app.switchView('wishlist')" class="w-10 h-10 flex items-center justify-center rounded-xl border-2 border-stone-200 bg-white text-stone-400"><i data-lucide="heart" class="w-5 h-5"></i></button>
                 <button onclick="window.app.switchView('mustbuy')" class="w-10 h-10 flex items-center justify-center rounded-xl border-2 border-stone-200 bg-white text-stone-400"><i data-lucide="shopping-bag" class="w-5 h-5"></i></button>
@@ -242,9 +249,8 @@
         </div>
     </div>
 
-    <!-- 2. 行李 -->
+    <!-- ==================== 2. 行李 ==================== -->
     <div id="view-packing" class="hidden-view">
-        <!-- [修正] 同步套用 safe header -->
         <div class="sticky-header-safe header-bar">
             <button onclick="window.app.goHome()" class="back-btn"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
             <h2 class="font-black text-2xl tracking-tight text-stone-900">PACKING</h2>
@@ -261,9 +267,8 @@
         </div>
     </div>
 
-    <!-- 3. 慾望清單 -->
+    <!-- ==================== 3. 慾望清單 (WISHLIST) ==================== -->
     <div id="view-wishlist" class="hidden-view">
-        <!-- [修正] 同步套用 safe header -->
         <div class="sticky-header-safe header-bar">
             <button onclick="window.app.goHome()" class="back-btn"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
             <h2 class="font-black text-2xl tracking-tight text-stone-900">WISHLIST</h2>
@@ -282,9 +287,8 @@
         </div>
     </div>
 
-    <!-- 4. 必買清單 -->
+    <!-- ==================== 4. 必買清單 (MUST BUY) ==================== -->
     <div id="view-mustbuy" class="hidden-view">
-        <!-- [修正] 同步套用 safe header -->
         <div class="sticky-header-safe header-bar">
             <button onclick="window.app.goHome()" class="back-btn"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
             <h2 class="font-black text-2xl tracking-tight text-stone-900">MUST BUY</h2>
@@ -305,12 +309,12 @@
 
 </div>
 
-<!-- FAB (純計算機) -->
+<!-- FAB (純計算機 - 首頁隱藏) -->
 <button id="fab-calc" onclick="window.app && window.app.openCalculator()" class="fab-calc hidden">
     <i data-lucide="calculator" class="w-8 h-8"></i>
 </button>
 
-<!-- 錯誤提示 -->
+<!-- 錯誤提示彈窗 -->
 <dialog id="dialog-alert" class="bg-white rounded-[24px] p-5 m-2 shadow-2xl border-4 border-stone-900 w-80">
     <div class="text-center">
         <h3 class="font-black text-xl text-stone-900 mb-2">NOTICE</h3>
@@ -319,7 +323,7 @@
     </div>
 </dialog>
 
-<!-- 計算機 -->
+<!-- 計算機 (簡易版) -->
 <dialog id="dialog-calculator">
     <div class="bg-white rounded-[24px] p-4 m-2 shadow-2xl border-4 border-stone-900">
         <div class="flex justify-between items-center mb-4">
@@ -423,26 +427,6 @@
     </div>
 </dialog>
 
-<dialog id="dialog-packing">
-    <div class="bg-white rounded-[24px] p-5 m-2 shadow-2xl border-2 border-stone-200">
-         <div class="flex justify-between items-center mb-4">
-            <h3 class="font-black text-xl text-stone-800">ADD ITEM</h3>
-            <button type="button" onclick="document.getElementById('dialog-packing').close()" class="p-2 bg-stone-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
-         </div>
-         <form onsubmit="window.app.savePacking(event)" class="space-y-3">
-             <select id="pack-cat" class="w-full bg-stone-50 p-3 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900">
-                <option value="證件錢包">證件錢包</option>
-                <option value="衣物穿搭">衣物穿搭</option>
-                <option value="電子產品">電子產品</option>
-                <option value="藥品雜物">藥品雜物</option>
-                <option value="其他">其他</option>
-             </select>
-             <input type="text" id="pack-name" placeholder="物品名稱" class="w-full bg-stone-50 p-4 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900" required>
-             <button type="submit" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg shadow-[4px_4px_0px_#10b981] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all border-2 border-stone-900 mt-2">ADD</button>
-         </form>
-    </div>
-</dialog>
-
 <!-- 慾望清單彈窗 -->
 <dialog id="dialog-wishlist">
     <div class="bg-white rounded-[24px] p-5 m-2 shadow-2xl border-2 border-stone-200">
@@ -499,8 +483,6 @@
         return false;
     };
 
-    // [回復] 為了讓 GitHub Pages 能夠運作，我們必須把設定檔寫回來
-    // 這是前端網頁的標準做法，安全性由 Firebase 後台規則控制
     const firebaseConfig = {
       apiKey: "AIzaSyCFbodSlPH_CBmQrISVVyyBgQmn7golSZI",
       authDomain: "travel-fc0fd.firebaseapp.com",
@@ -524,8 +506,8 @@
         setTimeout(() => { document.getElementById('alert-msg').innerText = "資料庫連線失敗"; document.getElementById('dialog-alert').showModal(); }, 500);
     }
     
-    // [共用設定] 這裡設定了固定的 App ID，讓你跟男友能連到同一個資料庫
-    const appId = 'tokyo-trip-shared-v1';
+    // [回復] 使用原本的 TRIP_ID，這樣你的舊資料就會回來了！
+    const TRIP_ID = "tokyo_trip_shared";
     let userId = null;
     let activeDate = '2025-12-14';
     let cachedItinerary = [];
@@ -565,13 +547,13 @@
             document.getElementById('dialog-alert').showModal();
         },
 
-        // [共用設定] 資料存取路徑改為 'public/data'，實現多人共用編輯
+        // [回復] 恢復原本的資料庫路徑邏輯，這樣舊資料就會顯示出來
         getCol(name) { 
-            return collection(db, 'artifacts', appId, 'public', 'data', name);
+            return collection(db, 'trips', TRIP_ID, name);
         },
         
         getDocRef(colName, docId) {
-            return doc(db, 'artifacts', appId, 'public', 'data', colName, docId);
+            return doc(db, 'trips', TRIP_ID, colName, docId);
         },
 
         switchView(view) {
@@ -964,25 +946,24 @@
             if(!title) return;
             try { 
                 if(id) {
-                    await updateDoc(doc(db, `trips/${TRIP_ID}/memos`, id), { title, content });
+                    await updateDoc(uiApp.getDocRef('memos', id), { title, content });
                 } else {
                     await addDoc(uiApp.getCol('memos'), { title, content, createdAt: serverTimestamp() }); 
                 }
                 document.getElementById('dialog-memo').close();
             } catch(e) { console.error(e); uiApp.showCustomAlert("儲存失敗: " + e.message); } 
         },
-        async togglePack(id, state) { try { await updateDoc(doc(db, `trips/${TRIP_ID}/packing`, id), {checked: state}); } catch(e) { console.error(e); } },
-        async toggleMustBuy(id, state) { try { await updateDoc(doc(db, `trips/${TRIP_ID}/mustbuy`, id), {checked: state}); } catch(e) { console.error(e); } },
+        async togglePack(id, state) { try { await updateDoc(uiApp.getDocRef('packing', id), {checked: state}); } catch(e) { console.error(e); } },
+        async toggleMustBuy(id, state) { try { await updateDoc(uiApp.getDocRef('mustbuy', id), {checked: state}); } catch(e) { console.error(e); } },
         
-        // 直接刪除，不確認
         async delDoc(col, id) { 
-            try { await deleteDoc(doc(db, `trips/${TRIP_ID}/${col}`, id)); } 
+            try { await deleteDoc(uiApp.getDocRef(col, id)); } 
             catch(e) { console.error(e); uiApp.showCustomAlert("刪除失敗"); } 
         },
         async deleteItinerary() { 
             const id = document.getElementById('itin-id').value; 
             try { 
-                await deleteDoc(doc(db, `trips/${TRIP_ID}/itinerary`, id)); 
+                await deleteDoc(uiApp.getDocRef('itinerary', id)); 
                 document.getElementById('dialog-itinerary').close(); 
             } catch(e) { console.error(e); uiApp.showCustomAlert("刪除失敗"); } 
         },
@@ -994,7 +975,7 @@
             
             items.forEach((el, index) => {
                 const id = el.getAttribute('data-id');
-                const ref = doc(db, `trips/${TRIP_ID}/itinerary`, id);
+                const ref = uiApp.getDocRef('itinerary', id);
                 batch.update(ref, { order: index });
             });
             try { await batch.commit(); } catch(e) { console.error('Order update failed', e); }
@@ -1035,7 +1016,7 @@
             };
             try {
                 if(id) {
-                    await updateDoc(doc(db, `trips/${TRIP_ID}/itinerary`, id), data);
+                    await updateDoc(uiApp.getDocRef('itinerary', id), data);
                 } else { 
                     const currentItems = cachedItinerary.filter(i => i.date === data.date);
                     data.order = currentItems.length;
@@ -1056,31 +1037,43 @@
         },
         async saveWishlist(e) {
             e.preventDefault();
+            const id = document.getElementById('wish-id').value;
             const type = document.querySelector('input[name="wish-type"]:checked').value;
+            const data = { 
+                location: document.getElementById('wish-location').value,
+                name: document.getElementById('wish-item').value,
+                link: document.getElementById('wish-link').value,
+                type: type
+            };
             try {
-                await addDoc(uiApp.getCol('wishlist'), { 
-                    location: document.getElementById('wish-location').value,
-                    name: document.getElementById('wish-item').value,
-                    type: type,
-                    createdAt: serverTimestamp() 
-                });
+                if(id) {
+                    await updateDoc(uiApp.getDocRef('wishlist', id), data);
+                } else {
+                    data.createdAt = serverTimestamp();
+                    await addDoc(uiApp.getCol('wishlist'), data);
+                }
                 e.target.reset();
                 document.getElementById('dialog-wishlist').close();
-            } catch(e) { console.error(e); uiApp.showCustomAlert("新增失敗"); }
+            } catch(e) { console.error(e); uiApp.showCustomAlert("儲存失敗"); }
         },
         async saveMustBuy(e) { 
             e.preventDefault(); 
+            const id = document.getElementById('mb-id').value;
+            const data = { 
+                name: document.getElementById('mb-name').value, 
+                details: document.getElementById('mb-details').value
+            };
             try { 
-                // 將輸入欄位 id='mb-details' 的值存入 'details' 欄位
-                await addDoc(uiApp.getCol('mustbuy'), { 
-                    name: document.getElementById('mb-name').value, 
-                    details: document.getElementById('mb-details').value, // 這裡改成存 details
-                    checked: false,
-                    createdAt: serverTimestamp() 
-                }); 
+                if(id) {
+                    await updateDoc(uiApp.getDocRef('mustbuy', id), data);
+                } else {
+                    data.checked = false;
+                    data.createdAt = serverTimestamp();
+                    await addDoc(uiApp.getCol('mustbuy'), data); 
+                }
                 e.target.reset(); 
                 document.getElementById('dialog-mustbuy').close(); 
-            } catch(e) { console.error(e); uiApp.showCustomAlert("新增失敗"); } 
+            } catch(e) { console.error(e); uiApp.showCustomAlert("儲存失敗"); } 
         },
         async updateRate() { try { const res=await fetch('https://api.exchangerate-api.com/v4/latest/JPY'); const d=await res.json(); currentRate=d.rates.TWD; } catch(e){} }
     };
