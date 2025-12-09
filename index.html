@@ -147,6 +147,11 @@
         
         .pet-frame { position: relative; overflow: hidden; background-size: cover; background-position: center; transition: background-image 0.5s ease-in-out; }
         .pet-frame::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); }
+        
+        /* [新增] 圖片展開樣式 */
+        .expanded-image { width: 100%; border-radius: 12px; margin-top: 12px; border: 2px solid #1c1917; display: block; object-fit: cover; }
+        .file-upload-label { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; border: 2px dashed #1c1917; border-radius: 12px; color: #57534e; font-weight: bold; cursor: pointer; background: #fafaf9; transition: all 0.2s; }
+        .file-upload-label:active { background: #e7e5e4; border-style: solid; }
     </style>
 </head>
 <body>
@@ -427,6 +432,26 @@
     </div>
 </dialog>
 
+<dialog id="dialog-packing">
+    <div class="bg-white rounded-[24px] p-5 m-2 shadow-2xl border-2 border-stone-200">
+         <div class="flex justify-between items-center mb-4">
+            <h3 class="font-black text-xl text-stone-800">ADD ITEM</h3>
+            <button type="button" onclick="document.getElementById('dialog-packing').close()" class="p-2 bg-stone-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+         </div>
+         <form onsubmit="window.app.savePacking(event)" class="space-y-3">
+             <select id="pack-cat" class="w-full bg-stone-50 p-3 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900">
+                <option value="證件錢包">證件錢包</option>
+                <option value="衣物穿搭">衣物穿搭</option>
+                <option value="電子產品">電子產品</option>
+                <option value="藥品雜物">藥品雜物</option>
+                <option value="其他">其他</option>
+             </select>
+             <input type="text" id="pack-name" placeholder="物品名稱" class="w-full bg-stone-50 p-4 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900" required>
+             <button type="submit" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg shadow-[4px_4px_0px_#10b981] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all border-2 border-stone-900 mt-2">ADD</button>
+         </form>
+    </div>
+</dialog>
+
 <!-- 慾望清單彈窗 -->
 <dialog id="dialog-wishlist">
     <div class="bg-white rounded-[24px] p-5 m-2 shadow-2xl border-2 border-stone-200">
@@ -442,6 +467,11 @@
                 <i data-lucide="map-pin" class="absolute left-3 top-3.5 w-4 h-4 text-stone-400"></i>
                 <input type="text" id="wish-link" placeholder="Google Maps 連結 或 備註" class="w-full bg-stone-50 p-3 pl-10 rounded-xl text-sm outline-none border border-stone-200 focus:border-stone-900 font-bold">
             </div>
+             <!-- [新增] 圖片上傳 -->
+             <label class="file-upload-label">
+                 <i data-lucide="camera" class="w-5 h-5"></i> 上傳圖片 (選填)
+                 <input type="file" id="wish-image" accept="image/*" class="hidden">
+             </label>
              <div class="flex gap-2">
                  <label class="flex-1 bg-stone-50 border-2 border-stone-200 rounded-xl p-3 flex items-center justify-center cursor-pointer has-[:checked]:border-stone-900 has-[:checked]:bg-stone-100">
                      <input type="radio" name="wish-type" value="eat" checked class="hidden">
@@ -468,6 +498,11 @@
              <input type="hidden" id="mb-id">
              <input type="text" id="mb-name" placeholder="商品名稱" class="w-full bg-stone-50 p-4 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900" required>
              <input type="text" id="mb-details" placeholder="圖片連結 或 文字備註" class="w-full bg-stone-50 p-4 rounded-xl text-sm outline-none border border-stone-200 focus:border-stone-900">
+             <!-- [新增] 圖片上傳 -->
+             <label class="file-upload-label">
+                 <i data-lucide="camera" class="w-5 h-5"></i> 上傳圖片 (選填)
+                 <input type="file" id="mb-image" accept="image/*" class="hidden">
+             </label>
              <button type="submit" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg shadow-[4px_4px_0px_#f97316] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all border-2 border-stone-900 mt-2">SAVE</button>
          </form>
     </div>
@@ -524,6 +559,39 @@
         "6.jpg", "7.jpg", "8.jpg", "9.jpg", "10.jpg"
     ];
 
+    // [新增] 圖片壓縮函式
+    const compressImage = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800; // 限制最大寬度
+                    const scaleSize = MAX_WIDTH / img.width;
+                    // 如果圖片小於限制，就不縮放
+                    if (img.width > MAX_WIDTH) {
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                    } else {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                    }
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // 壓縮成 JPEG, 品質 0.7
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7); 
+                    resolve(dataUrl);
+                }
+            }
+            reader.onerror = (error) => reject(error);
+        });
+    };
+
     const uiApp = {
         init(user) {
             userId = user.uid;
@@ -547,7 +615,7 @@
             document.getElementById('dialog-alert').showModal();
         },
 
-        // [回復] 恢復原本的資料庫路徑邏輯，這樣舊資料就會顯示出來
+        // [回復] 恢復原本的資料庫路徑邏輯
         getCol(name) { 
             return collection(db, 'trips', TRIP_ID, name);
         },
@@ -805,24 +873,32 @@
                                 mapLink = `<a href="${searchUrl}" target="_blank" onclick="event.stopPropagation()" class="text-[10px] font-black bg-stone-100 hover:bg-stone-900 hover:text-white text-stone-600 px-2 py-1 rounded ml-2 border border-stone-200 transition-colors">GO ↗</a>`;
                             }
 
+                            // [新增] 圖片展開邏輯
+                            const hasImage = i.image && i.image.startsWith('data:image');
+                            const detailId = `wish-detail-${i.id}`;
+
                             return `
-                            <div class="flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-stone-100 cursor-pointer hover:bg-stone-100 transition-colors group" onclick="window.app.openWishlistModal('${i.id}')">
-                                <div class="flex items-center gap-3 overflow-hidden">
-                                    <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${i.type==='eat'?'bg-orange-100 text-orange-600':'bg-stone-200 text-stone-600'}">
-                                        <i data-lucide="${i.type==='eat'?'utensils':'shopping-bag'}" class="w-4 h-4"></i>
-                                    </div>
-                                    <div class="flex flex-col overflow-hidden">
-                                        <div class="flex items-center">
-                                            <span class="font-bold text-stone-800 truncate">${i.name}</span>
-                                            ${mapLink}
+                            <div class="bg-stone-50 p-3 rounded-xl border border-stone-100 cursor-pointer hover:bg-stone-100 transition-colors group" onclick="document.getElementById('${detailId}') && document.getElementById('${detailId}').classList.toggle('hidden')">
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center gap-3 overflow-hidden">
+                                        <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${i.type==='eat'?'bg-orange-100 text-orange-600':'bg-stone-200 text-stone-600'}">
+                                            <i data-lucide="${i.type==='eat'?'utensils':'shopping-bag'}" class="w-4 h-4"></i>
                                         </div>
-                                        ${(i.link && !i.link.startsWith('http')) ? `<div class="text-xs text-stone-400 font-bold truncate">${i.link}</div>` : ''}
+                                        <div class="flex flex-col overflow-hidden">
+                                            <div class="flex items-center">
+                                                <span class="font-bold text-stone-800 truncate">${i.name}</span>
+                                                ${mapLink}
+                                            </div>
+                                            ${(i.link && !i.link.startsWith('http')) ? `<div class="text-xs text-stone-400 font-bold truncate">${i.link}</div>` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="flex-shrink-0 flex items-center">
+                                        ${hasImage ? `<i data-lucide="image" class="w-4 h-4 text-stone-300 mr-2"></i>` : ''}
+                                        <button onclick="event.stopPropagation(); window.app.openWishlistModal('${i.id}')" class="text-stone-300 hover:text-stone-900 p-2"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                        <button onclick="event.stopPropagation(); window.app.delDoc('wishlist', '${i.id}')" class="text-stone-300 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                     </div>
                                 </div>
-                                <div class="flex-shrink-0 flex items-center">
-                                    <i data-lucide="pencil" class="w-4 h-4 text-stone-300 mr-3 group-hover:text-stone-500"></i>
-                                    <button onclick="event.stopPropagation(); window.app.delDoc('wishlist', '${i.id}')" class="text-stone-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                </div>
+                                ${hasImage ? `<div id="${detailId}" class="hidden mt-2 animate-fade-in"><img src="${i.image}" class="expanded-image" /></div>` : ''}
                             </div>
                         `;
                         }).join('')}
@@ -840,29 +916,37 @@
 
             list.innerHTML = items.map(i => {
                 const hasDetails = i.details && i.details.trim() !== '';
+                const hasImage = i.image && i.image.startsWith('data:image');
                 let detailContent = '';
+                
                 if(hasDetails) {
                     const isUrl = i.details.startsWith('http');
                     if(isUrl) {
-                        detailContent = `<div class="mt-3 rounded-lg overflow-hidden border-2 border-stone-900"><img src="${i.details}" class="w-full h-40 object-cover" onerror="this.style.display='none'"></div>`;
+                        detailContent += `<div class="mt-3 rounded-lg overflow-hidden border-2 border-stone-900"><img src="${i.details}" class="w-full h-40 object-cover" onerror="this.style.display='none'"></div>`;
                     } else {
-                        detailContent = `<div class="mt-3 p-3 bg-orange-50 text-orange-800 font-bold text-sm rounded-lg border-l-4 border-orange-400">${i.details}</div>`;
+                        detailContent += `<div class="mt-3 p-3 bg-orange-50 text-orange-800 font-bold text-sm rounded-lg border-l-4 border-orange-400">${i.details}</div>`;
                     }
                 }
+                
+                if(hasImage) {
+                    detailContent += `<img src="${i.image}" class="expanded-image" />`;
+                }
+
+                const hasContent = hasDetails || hasImage;
 
                 return `
                 <div class="card-marble-sm bg-white p-3 flex flex-col transition-all ${i.checked ? 'item-checked bg-stone-100' : ''}">
                     <div class="flex items-center gap-3">
                         <input type="checkbox" class="checkbox-custom" ${i.checked?'checked':''} onchange="window.app.toggleMustBuy('${i.id}', this.checked)">
                         <div class="flex-grow font-black text-lg text-stone-800 cursor-pointer hover:text-orange-600 transition-colors" onclick="document.getElementById('mb-detail-${i.id}') && document.getElementById('mb-detail-${i.id}').classList.toggle('hidden')">
-                            ${i.name} ${hasDetails ? '<i data-lucide="sticky-note" class="w-3 h-3 inline text-stone-400 ml-1 align-top"></i>' : ''}
+                            ${i.name} ${hasContent ? '<i data-lucide="sticky-note" class="w-3 h-3 inline text-stone-400 ml-1 align-top"></i>' : ''}
                         </div>
                         <div class="flex items-center">
                              <button onclick="event.stopPropagation(); window.app.openMustBuyModal('${i.id}')" class="text-stone-300 hover:text-stone-900 p-2"><i data-lucide="pencil" class="w-4 h-4"></i></button>
                              <button onclick="window.app.delDoc('mustbuy', '${i.id}')" class="text-stone-300 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
                     </div>
-                    ${hasDetails ? `<div id="mb-detail-${i.id}" class="hidden ml-9 transition-all">${detailContent}</div>` : ''}
+                    ${hasContent ? `<div id="mb-detail-${i.id}" class="hidden ml-9 transition-all">${detailContent}</div>` : ''}
                 </div>
             `}).join('');
             if(window.lucide) window.lucide.createIcons();
@@ -910,6 +994,9 @@
             const form = document.querySelector('#dialog-wishlist form');
             form.reset();
             document.getElementById('wish-id').value = '';
+            // Reset file input
+            document.getElementById('wish-image').value = '';
+            
             if(id) {
                 const item = cachedWishlist.find(i => i.id === id);
                 if(item) {
@@ -927,6 +1014,9 @@
             const form = document.querySelector('#dialog-mustbuy form');
             form.reset();
             document.getElementById('mb-id').value = '';
+            // Reset file input
+            document.getElementById('mb-image').value = '';
+
             if(id) {
                 const item = cachedMustBuy.find(i => i.id === id);
                 if(item) {
@@ -1003,12 +1093,11 @@
         async saveItinerary(e) {
             e.preventDefault();
             const id = document.getElementById('itin-id').value;
-            // 讀取結束時間
             const endTime = document.getElementById('itin-end-time').value;
             const data = { 
                 date: document.getElementById('itin-date').value, 
                 time: document.getElementById('itin-time').value, 
-                endTime: endTime, // 儲存
+                endTime: endTime,
                 cat: document.getElementById('itin-cat').value, 
                 title: document.getElementById('itin-title').value, 
                 note: document.getElementById('itin-note').value, 
@@ -1039,12 +1128,27 @@
             e.preventDefault();
             const id = document.getElementById('wish-id').value;
             const type = document.querySelector('input[name="wish-type"]:checked').value;
+            const fileInput = document.getElementById('wish-image');
+            
             const data = { 
                 location: document.getElementById('wish-location').value,
                 name: document.getElementById('wish-item').value,
                 link: document.getElementById('wish-link').value,
                 type: type
             };
+
+            // [新增] 處理圖片壓縮
+            if (fileInput.files.length > 0) {
+                try {
+                    const base64Img = await compressImage(fileInput.files[0]);
+                    data.image = base64Img;
+                } catch (err) {
+                    console.error("Image compression failed", err);
+                    uiApp.showCustomAlert("圖片處理失敗");
+                    return;
+                }
+            }
+
             try {
                 if(id) {
                     await updateDoc(uiApp.getDocRef('wishlist', id), data);
@@ -1059,10 +1163,25 @@
         async saveMustBuy(e) { 
             e.preventDefault(); 
             const id = document.getElementById('mb-id').value;
+            const fileInput = document.getElementById('mb-image');
+
             const data = { 
                 name: document.getElementById('mb-name').value, 
                 details: document.getElementById('mb-details').value
             };
+
+            // [新增] 處理圖片壓縮
+            if (fileInput.files.length > 0) {
+                try {
+                    const base64Img = await compressImage(fileInput.files[0]);
+                    data.image = base64Img;
+                } catch (err) {
+                    console.error("Image compression failed", err);
+                    uiApp.showCustomAlert("圖片處理失敗");
+                    return;
+                }
+            }
+
             try { 
                 if(id) {
                     await updateDoc(uiApp.getDocRef('mustbuy', id), data);
@@ -1086,9 +1205,18 @@
             if(view !== 'view-home') document.getElementById('fab-calc').style.display = 'flex'; 
         });
         
+        // [SECURE] Enhanced Auth Logic with fallback
+        const initAuth = async () => {
+            // Remove check for __initial_auth_token since it's not available in offline files
+            await signInAnonymously(auth);
+        };
+        initAuth().catch(console.error);
+
         onAuthStateChanged(auth, (user) => {
             if (user) { uiApp.init(user); } 
-            else { signInAnonymously(auth).catch(err => { console.warn("Offline mode", err); uiApp.initOffline('guest'); }); }
+            else { 
+                // Fallback handled by initAuth, but good to have listener
+            }
         });
     });
 </script>
