@@ -9,7 +9,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#e5e5e5">
 
-    <!-- 請確認你的 GitHub 倉庫中有上傳名為 logo.png 的圖片 -->
     <link rel="apple-touch-icon" href="logo.png">
 
     <!-- Tailwind CSS -->
@@ -47,15 +46,12 @@
             top: 0;
             z-index: 40;
             background-color: #e5e5e5; /* 與背景同色，遮擋下方滾動內容 */
-            /* 關鍵：高度包含安全區域，並多加一點緩衝 */
             padding-top: calc(env(safe-area-inset-top) + 10px);
             padding-bottom: 10px;
             padding-left: 1rem;
             padding-right: 1rem;
-            /* 讓標題往左右延伸，蓋住原本 container 的 padding */
             margin-left: -1rem;
             margin-right: -1rem;
-            /* 加一點陰影讓層次更明顯 */
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
         }
 
@@ -120,7 +116,7 @@
         .big-action-btn:active { transform: scale(0.98); box-shadow: 2px 2px 0px rgba(0,0,0,0.1); }
         .btn-orange { background: #f97316; border-color: #c2410c; color: white; }
 
-        .header-bar { display: flex; justify-content: space-between; align-items: center; } /* padding 由 sticky-header-safe 控制 */
+        .header-bar { display: flex; justify-content: space-between; align-items: center; } 
         .back-btn { width: 40px; height: 40px; border: 2px solid #1c1917; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0px #1c1917; }
         
         .date-tab { flex-shrink: 0; width: 60px; height: 64px; border: 2px solid #1c1917; background: white; color: #1c1917; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; cursor: pointer; transition: all 0.2s; box-shadow: 3px 3px 0px #a8a29e; border-radius: 12px; }
@@ -148,7 +144,6 @@
         .pet-frame { position: relative; overflow: hidden; background-size: cover; background-position: center; transition: background-image 0.5s ease-in-out; }
         .pet-frame::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); }
         
-        /* [新增] 圖片展開樣式 */
         .expanded-image { width: 100%; border-radius: 12px; margin-top: 12px; border: 2px solid #1c1917; display: block; object-fit: cover; }
         .file-upload-label { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; border: 2px dashed #1c1917; border-radius: 12px; color: #57534e; font-weight: bold; cursor: pointer; background: #fafaf9; transition: all 0.2s; }
         .file-upload-label:active { background: #e7e5e4; border-style: solid; }
@@ -303,7 +298,8 @@
             </div>
         </div>
         
-        <div id="list-mustbuy" class="space-y-3"></div>
+        <!-- [修改] 這裡改用 container 來裝分類後的內容 -->
+        <div id="mustbuy-container" class="space-y-6"></div>
 
         <div class="flow-btn-container">
              <button onclick="window.app.openMustBuyModal()" class="big-action-btn hover:bg-stone-100 transition-colors">
@@ -467,7 +463,7 @@
                 <i data-lucide="map-pin" class="absolute left-3 top-3.5 w-4 h-4 text-stone-400"></i>
                 <input type="text" id="wish-link" placeholder="Google Maps 連結 或 備註" class="w-full bg-stone-50 p-3 pl-10 rounded-xl text-sm outline-none border border-stone-200 focus:border-stone-900 font-bold">
             </div>
-             <!-- [新增] 圖片上傳 -->
+             <!-- 圖片上傳 -->
              <label class="file-upload-label">
                  <i data-lucide="camera" class="w-5 h-5"></i> 上傳圖片 (選填)
                  <input type="file" id="wish-image" accept="image/*" class="hidden">
@@ -496,9 +492,19 @@
          </div>
          <form onsubmit="window.app.saveMustBuy(event)" class="space-y-3">
              <input type="hidden" id="mb-id">
+             <!-- [新增] 分類輸入 -->
+             <div class="relative">
+                 <input type="text" id="mb-category" list="mb-cat-list" placeholder="分類 (例: 送家人、自用)" class="w-full bg-stone-50 p-4 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900" required>
+                 <datalist id="mb-cat-list">
+                     <option value="自用 / 補貨"></option>
+                     <option value="送家人 / 長輩"></option>
+                     <option value="送朋友 / 同事"></option>
+                     <option value="代購 / 其他"></option>
+                 </datalist>
+             </div>
              <input type="text" id="mb-name" placeholder="商品名稱" class="w-full bg-stone-50 p-4 rounded-xl font-bold outline-none border border-stone-200 focus:border-stone-900" required>
              <input type="text" id="mb-details" placeholder="圖片連結 或 文字備註" class="w-full bg-stone-50 p-4 rounded-xl text-sm outline-none border border-stone-200 focus:border-stone-900">
-             <!-- [新增] 圖片上傳 -->
+             <!-- 圖片上傳 -->
              <label class="file-upload-label">
                  <i data-lucide="camera" class="w-5 h-5"></i> 上傳圖片 (選填)
                  <input type="file" id="mb-image" accept="image/*" class="hidden">
@@ -518,6 +524,7 @@
         return false;
     };
 
+    // [回復] GitHub Pages 專用的 Hardcoded 設定
     const firebaseConfig = {
       apiKey: "AIzaSyCFbodSlPH_CBmQrISVVyyBgQmn7golSZI",
       authDomain: "travel-fc0fd.firebaseapp.com",
@@ -541,7 +548,7 @@
         setTimeout(() => { document.getElementById('alert-msg').innerText = "資料庫連線失敗"; document.getElementById('dialog-alert').showModal(); }, 500);
     }
     
-    // [回復] 使用原本的 TRIP_ID，這樣你的舊資料就會回來了！
+    // [回復] 使用原本的 TRIP_ID，找回舊資料
     const TRIP_ID = "tokyo_trip_shared";
     let userId = null;
     let activeDate = '2025-12-14';
@@ -559,7 +566,7 @@
         "6.jpg", "7.jpg", "8.jpg", "9.jpg", "10.jpg"
     ];
 
-    // [新增] 圖片壓縮函式
+    // 圖片壓縮函式
     const compressImage = (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -569,9 +576,8 @@
                 img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800; // 限制最大寬度
+                    const MAX_WIDTH = 800;
                     const scaleSize = MAX_WIDTH / img.width;
-                    // 如果圖片小於限制，就不縮放
                     if (img.width > MAX_WIDTH) {
                         canvas.width = MAX_WIDTH;
                         canvas.height = img.height * scaleSize;
@@ -579,11 +585,8 @@
                         canvas.width = img.width;
                         canvas.height = img.height;
                     }
-                    
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    // 壓縮成 JPEG, 品質 0.7
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.7); 
                     resolve(dataUrl);
                 }
@@ -615,7 +618,7 @@
             document.getElementById('dialog-alert').showModal();
         },
 
-        // [回復] 恢復原本的資料庫路徑邏輯
+        // [回復] 恢復原本的資料庫路徑邏輯，這樣舊資料就會顯示出來
         getCol(name) { 
             return collection(db, 'trips', TRIP_ID, name);
         },
@@ -640,7 +643,7 @@
             if(view === 'view-home') fab.style.display = 'none';
             else fab.style.display = 'flex';
             
-            if(view === 'itinerary') this.renderItinerary();
+            if(view === 'itinerary') uiApp.renderItinerary(); // [Fix] Use uiApp.renderItinerary
             if(window.lucide) window.lucide.createIcons();
         },
         
@@ -654,7 +657,7 @@
         startListeners() {
             if(!db || !userId) return;
             try {
-                const qItin = query(this.getCol('itinerary'), orderBy('date'));
+                const qItin = query(uiApp.getCol('itinerary'), orderBy('date')); // [Fix] Use uiApp.getCol
                 onSnapshot(qItin, (snap) => {
                     cachedItinerary = snap.docs.map(d => ({id: d.id, ...d.data()}));
                     cachedItinerary.sort((a, b) => {
@@ -668,23 +671,23 @@
                         if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
                         return 0;
                     });
-                    this.renderItinerary();
+                    uiApp.renderItinerary(); // [Fix] Use uiApp.renderItinerary
                 });
 
-                onSnapshot(query(this.getCol('memos'), orderBy('createdAt')), (snap) => {
+                onSnapshot(query(uiApp.getCol('memos'), orderBy('createdAt')), (snap) => {
                     memoList = snap.docs.map(d=>({id:d.id, ...d.data()}));
-                    this.renderMemo(memoList);
+                    uiApp.renderMemo(memoList); // [Fix] Use uiApp.renderMemo
                 });
-                onSnapshot(query(this.getCol('packing')), (snap) => this.renderPacking(snap.docs.map(d=>({id:d.id, ...d.data()}))));
+                onSnapshot(query(uiApp.getCol('packing')), (snap) => uiApp.renderPacking(snap.docs.map(d=>({id:d.id, ...d.data()}))));
                 
-                onSnapshot(query(this.getCol('wishlist'), orderBy('createdAt')), (snap) => {
+                onSnapshot(query(uiApp.getCol('wishlist'), orderBy('createdAt')), (snap) => {
                     cachedWishlist = snap.docs.map(d=>({id:d.id, ...d.data()}));
-                    this.renderWishlist(cachedWishlist);
+                    uiApp.renderWishlist(cachedWishlist); // [Fix] Use uiApp.renderWishlist
                 });
                 
-                onSnapshot(query(this.getCol('mustbuy'), orderBy('createdAt')), (snap) => {
+                onSnapshot(query(uiApp.getCol('mustbuy'), orderBy('createdAt')), (snap) => {
                     cachedMustBuy = snap.docs.map(d=>({id:d.id, ...d.data()}));
-                    this.renderMustBuy(cachedMustBuy);
+                    uiApp.renderMustBuy(cachedMustBuy); // [Fix] Use uiApp.renderMustBuy
                 });
             } catch(e) { console.error("Listener init failed", e); }
         },
@@ -719,7 +722,8 @@
             if(!isPre) {
                 const items = grouped[activeDate] || [];
                 const dateObj = new Date(activeDate);
-                this.fetchWeather(activeDate, (w, temp) => {
+                // [Fix] Use uiApp.fetchWeather instead of this.fetchWeather
+                uiApp.fetchWeather(activeDate, (w, temp) => {
                     const el = document.getElementById('weather-info');
                     if(el) el.innerHTML = `${w} <span class="text-sm ml-1 font-bold">${temp}</span>`;
                 });
@@ -813,14 +817,14 @@
                         delay: 0,
                         delayOnTouchOnly: false,
                         onEnd: function(evt) {
-                            window.app.updateItineraryOrder();
+                            window.app.updateItineraryOrder(); // [Fix] Use uiApp.updateItineraryOrder
                         }
                     });
                 }
             }
             if(window.lucide) window.lucide.createIcons();
         },
-        switchDate(d) { activeDate = d; this.renderItinerary(); },
+        switchDate(d) { activeDate = d; uiApp.renderItinerary(); }, // [Fix] Use uiApp.renderItinerary
         async fetchWeather(dateStr, cb) { try { const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&daily=weathercode,temperature_2m_max&timezone=Asia%2FTokyo&start_date=${dateStr}&end_date=${dateStr}`); const data = await res.json(); const code = data.daily.weathercode[0]; const temp = data.daily.temperature_2m_max[0]; let icon = '☁️'; if (code <= 1) icon = '☀️'; else if (code <= 3) icon = '⛅'; else if (code <= 67) icon = '🌧️'; else if (code <= 77) icon = '❄️'; cb(icon, `${Math.round(temp)}°C`); } catch(e) { cb('✨', ''); } },
         
         renderMemo(items) {
@@ -873,7 +877,6 @@
                                 mapLink = `<a href="${searchUrl}" target="_blank" onclick="event.stopPropagation()" class="text-[10px] font-black bg-stone-100 hover:bg-stone-900 hover:text-white text-stone-600 px-2 py-1 rounded ml-2 border border-stone-200 transition-colors">GO ↗</a>`;
                             }
 
-                            // [新增] 圖片展開邏輯
                             const hasImage = i.image && i.image.startsWith('data:image');
                             const detailId = `wish-detail-${i.id}`;
 
@@ -909,46 +912,82 @@
         },
 
         renderMustBuy(items) {
-            const list = document.getElementById('list-mustbuy');
-            items.sort((a, b) => (a.checked === b.checked) ? 0 : a.checked ? 1 : -1);
+            const list = document.getElementById('mustbuy-container');
             
             if(items.length === 0) { list.innerHTML = `<div class="text-center text-stone-400 font-bold py-10">NO ITEMS YET</div>`; return; }
 
-            list.innerHTML = items.map(i => {
-                const hasDetails = i.details && i.details.trim() !== '';
-                const hasImage = i.image && i.image.startsWith('data:image');
-                let detailContent = '';
-                
-                if(hasDetails) {
-                    const isUrl = i.details.startsWith('http');
-                    if(isUrl) {
-                        detailContent += `<div class="mt-3 rounded-lg overflow-hidden border-2 border-stone-900"><img src="${i.details}" class="w-full h-40 object-cover" onerror="this.style.display='none'"></div>`;
-                    } else {
-                        detailContent += `<div class="mt-3 p-3 bg-orange-50 text-orange-800 font-bold text-sm rounded-lg border-l-4 border-orange-400">${i.details}</div>`;
-                    }
-                }
-                
-                if(hasImage) {
-                    detailContent += `<img src="${i.image}" class="expanded-image" />`;
-                }
+            // [新增] 自動分組邏輯
+            const grouped = items.reduce((acc, item) => {
+                const cat = item.category || '未分類';
+                (acc[cat] = acc[cat] || []).push(item);
+                return acc;
+            }, {});
 
-                const hasContent = hasDetails || hasImage;
+            // [新增] 排序邏輯 (自用 -> 送人 -> 其他 -> 未分類)
+            const catOrder = ["自用 / 補貨", "送家人 / 長輩", "送朋友 / 同事", "代購 / 其他"];
+            const sortedKeys = Object.keys(grouped).sort((a, b) => {
+                const idxA = catOrder.indexOf(a);
+                const idxB = catOrder.indexOf(b);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return a.localeCompare(b);
+            });
 
+            list.innerHTML = sortedKeys.map(cat => {
+                const groupItems = grouped[cat];
+                // 分組內的排序：未完成在先
+                groupItems.sort((a, b) => (a.checked === b.checked) ? 0 : a.checked ? 1 : -1);
+                
+                const doneCount = groupItems.filter(i => i.checked).length;
+                
                 return `
-                <div class="card-marble-sm bg-white p-3 flex flex-col transition-all ${i.checked ? 'item-checked bg-stone-100' : ''}">
-                    <div class="flex items-center gap-3">
-                        <input type="checkbox" class="checkbox-custom" ${i.checked?'checked':''} onchange="window.app.toggleMustBuy('${i.id}', this.checked)">
-                        <div class="flex-grow font-black text-lg text-stone-800 cursor-pointer hover:text-orange-600 transition-colors" onclick="document.getElementById('mb-detail-${i.id}') && document.getElementById('mb-detail-${i.id}').classList.toggle('hidden')">
-                            ${i.name} ${hasContent ? '<i data-lucide="sticky-note" class="w-3 h-3 inline text-stone-400 ml-1 align-top"></i>' : ''}
-                        </div>
-                        <div class="flex items-center">
-                             <button onclick="event.stopPropagation(); window.app.openMustBuyModal('${i.id}')" class="text-stone-300 hover:text-stone-900 p-2"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-                             <button onclick="window.app.delDoc('mustbuy', '${i.id}')" class="text-stone-300 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </div>
+                <div class="card-marble bg-white p-4">
+                    <div class="flex justify-between border-b-2 border-stone-100 pb-2 mb-2">
+                        <span class="font-black text-lg uppercase text-stone-800">${cat}</span>
+                        <span class="text-xs font-bold text-stone-500 bg-stone-100 px-2 py-1 rounded-full flex items-center">${doneCount}/${groupItems.length}</span>
                     </div>
-                    ${hasContent ? `<div id="mb-detail-${i.id}" class="hidden ml-9 transition-all">${detailContent}</div>` : ''}
-                </div>
-            `}).join('');
+                    <div class="space-y-3">
+                        ${groupItems.map(i => {
+                            const hasDetails = i.details && i.details.trim() !== '';
+                            const hasImage = i.image && i.image.startsWith('data:image');
+                            let detailContent = '';
+                            
+                            if(hasDetails) {
+                                const isUrl = i.details.startsWith('http');
+                                if(isUrl) {
+                                    detailContent += `<div class="mt-3 rounded-lg overflow-hidden border-2 border-stone-900"><img src="${i.details}" class="w-full h-40 object-cover" onerror="this.style.display='none'"></div>`;
+                                } else {
+                                    detailContent += `<div class="mt-3 p-3 bg-orange-50 text-orange-800 font-bold text-sm rounded-lg border-l-4 border-orange-400">${i.details}</div>`;
+                                }
+                            }
+                            
+                            if(hasImage) {
+                                detailContent += `<img src="${i.image}" class="expanded-image" />`;
+                            }
+
+                            const hasContent = hasDetails || hasImage;
+
+                            return `
+                            <div class="bg-stone-50 p-3 rounded-xl border border-stone-100 flex flex-col transition-all ${i.checked ? 'item-checked bg-stone-100 opacity-60' : ''}">
+                                <div class="flex items-center gap-3">
+                                    <input type="checkbox" class="checkbox-custom" ${i.checked?'checked':''} onchange="window.app.toggleMustBuy('${i.id}', this.checked)">
+                                    <div class="flex-grow font-black text-lg text-stone-800 cursor-pointer hover:text-orange-600 transition-colors" onclick="document.getElementById('mb-detail-${i.id}') && document.getElementById('mb-detail-${i.id}').classList.toggle('hidden')">
+                                        ${i.name} ${hasContent ? '<i data-lucide="sticky-note" class="w-3 h-3 inline text-stone-400 ml-1 align-top"></i>' : ''}
+                                    </div>
+                                    <div class="flex items-center">
+                                         <button onclick="event.stopPropagation(); window.app.openMustBuyModal('${i.id}')" class="text-stone-300 hover:text-stone-900 p-2"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                         <button onclick="window.app.delDoc('mustbuy', '${i.id}')" class="text-stone-300 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    </div>
+                                </div>
+                                ${hasContent ? `<div id="mb-detail-${i.id}" class="hidden ml-9 transition-all">${detailContent}</div>` : ''}
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>`;
+            }).join('');
+            
             if(window.lucide) window.lucide.createIcons();
         },
 
@@ -1021,6 +1060,8 @@
                 const item = cachedMustBuy.find(i => i.id === id);
                 if(item) {
                     document.getElementById('mb-id').value = item.id;
+                    // [新增] 載入分類
+                    document.getElementById('mb-category').value = item.category || '';
                     document.getElementById('mb-name').value = item.name;
                     document.getElementById('mb-details').value = item.details || '';
                 }
@@ -1036,24 +1077,24 @@
             if(!title) return;
             try { 
                 if(id) {
-                    await updateDoc(uiApp.getDocRef('memos', id), { title, content });
+                    await updateDoc(uiApp.getDocRef('memos', id), { title, content }); // [Fix] Use uiApp.getDocRef
                 } else {
-                    await addDoc(uiApp.getCol('memos'), { title, content, createdAt: serverTimestamp() }); 
+                    await addDoc(uiApp.getCol('memos'), { title, content, createdAt: serverTimestamp() }); // [Fix] Use uiApp.getCol
                 }
                 document.getElementById('dialog-memo').close();
             } catch(e) { console.error(e); uiApp.showCustomAlert("儲存失敗: " + e.message); } 
         },
-        async togglePack(id, state) { try { await updateDoc(uiApp.getDocRef('packing', id), {checked: state}); } catch(e) { console.error(e); } },
-        async toggleMustBuy(id, state) { try { await updateDoc(uiApp.getDocRef('mustbuy', id), {checked: state}); } catch(e) { console.error(e); } },
+        async togglePack(id, state) { try { await updateDoc(uiApp.getDocRef('packing', id), {checked: state}); } catch(e) { console.error(e); } }, // [Fix] Use uiApp.getDocRef
+        async toggleMustBuy(id, state) { try { await updateDoc(uiApp.getDocRef('mustbuy', id), {checked: state}); } catch(e) { console.error(e); } }, // [Fix] Use uiApp.getDocRef
         
         async delDoc(col, id) { 
-            try { await deleteDoc(uiApp.getDocRef(col, id)); } 
+            try { await deleteDoc(uiApp.getDocRef(col, id)); } // [Fix] Use uiApp.getDocRef
             catch(e) { console.error(e); uiApp.showCustomAlert("刪除失敗"); } 
         },
         async deleteItinerary() { 
             const id = document.getElementById('itin-id').value; 
             try { 
-                await deleteDoc(uiApp.getDocRef('itinerary', id)); 
+                await deleteDoc(uiApp.getDocRef('itinerary', id)); // [Fix] Use uiApp.getDocRef
                 document.getElementById('dialog-itinerary').close(); 
             } catch(e) { console.error(e); uiApp.showCustomAlert("刪除失敗"); } 
         },
@@ -1065,7 +1106,7 @@
             
             items.forEach((el, index) => {
                 const id = el.getAttribute('data-id');
-                const ref = uiApp.getDocRef('itinerary', id);
+                const ref = uiApp.getDocRef('itinerary', id); // [Fix] Use uiApp.getDocRef
                 batch.update(ref, { order: index });
             });
             try { await batch.commit(); } catch(e) { console.error('Order update failed', e); }
@@ -1076,11 +1117,11 @@
             document.getElementById('calc-mode-text').innerText = calcMode === 'JPY_TWD' ? 'JPY → TWD' : 'TWD → JPY';
             document.getElementById('calc-input-unit').innerText = calcMode === 'JPY_TWD' ? 'JPY' : 'TWD';
             document.getElementById('calc-output-unit').innerText = calcMode === 'JPY_TWD' ? 'TWD' : 'JPY';
-            this.updateCalc();
+            uiApp.updateCalc(); // [Fix] Use uiApp.updateCalc
         },
-        calcAppend(n) { if(calcVal==='0'&&n!=='.')calcVal=''; if(n==='.'&&calcVal.includes('.'))return; calcVal+=n; this.updateCalc(); },
-        calcDel() { calcVal=calcVal.slice(0,-1)||'0'; this.updateCalc(); },
-        calcClear() { calcVal='0'; this.updateCalc(); },
+        calcAppend(n) { if(calcVal==='0'&&n!=='.')calcVal=''; if(n==='.'&&calcVal.includes('.'))return; calcVal+=n; uiApp.updateCalc(); }, // [Fix] Use uiApp.updateCalc
+        calcDel() { calcVal=calcVal.slice(0,-1)||'0'; uiApp.updateCalc(); }, // [Fix] Use uiApp.updateCalc
+        calcClear() { calcVal='0'; uiApp.updateCalc(); }, // [Fix] Use uiApp.updateCalc
         updateCalc() { 
             document.getElementById('calc-display').value = Number(calcVal).toLocaleString(); 
             const val = parseFloat(calcVal||0);
@@ -1105,12 +1146,12 @@
             };
             try {
                 if(id) {
-                    await updateDoc(uiApp.getDocRef('itinerary', id), data);
+                    await updateDoc(uiApp.getDocRef('itinerary', id), data); // [Fix] Use uiApp.getDocRef
                 } else { 
                     const currentItems = cachedItinerary.filter(i => i.date === data.date);
                     data.order = currentItems.length;
                     data.createdAt = serverTimestamp(); 
-                    await addDoc(uiApp.getCol('itinerary'), data); 
+                    await addDoc(uiApp.getCol('itinerary'), data); // [Fix] Use uiApp.getCol
                 }
                 document.getElementById('dialog-itinerary').close();
                 activeDate = data.date;
@@ -1119,7 +1160,7 @@
         async savePacking(e) { 
             e.preventDefault(); 
             try { 
-                await addDoc(uiApp.getCol('packing'), { name: document.getElementById('pack-name').value, category: document.getElementById('pack-cat').value, checked: false, createdAt: serverTimestamp() }); 
+                await addDoc(uiApp.getCol('packing'), { name: document.getElementById('pack-name').value, category: document.getElementById('pack-cat').value, checked: false, createdAt: serverTimestamp() }); // [Fix] Use uiApp.getCol
                 document.getElementById('pack-name').value=''; 
                 document.getElementById('dialog-packing').close(); 
             } catch(e) { console.error(e); uiApp.showCustomAlert("新增失敗"); } 
@@ -1137,7 +1178,6 @@
                 type: type
             };
 
-            // [新增] 處理圖片壓縮
             if (fileInput.files.length > 0) {
                 try {
                     const base64Img = await compressImage(fileInput.files[0]);
@@ -1151,10 +1191,10 @@
 
             try {
                 if(id) {
-                    await updateDoc(uiApp.getDocRef('wishlist', id), data);
+                    await updateDoc(uiApp.getDocRef('wishlist', id), data); // [Fix] Use uiApp.getDocRef
                 } else {
                     data.createdAt = serverTimestamp();
-                    await addDoc(uiApp.getCol('wishlist'), data);
+                    await addDoc(uiApp.getCol('wishlist'), data); // [Fix] Use uiApp.getCol
                 }
                 e.target.reset();
                 document.getElementById('dialog-wishlist').close();
@@ -1166,11 +1206,11 @@
             const fileInput = document.getElementById('mb-image');
 
             const data = { 
+                category: document.getElementById('mb-category').value,
                 name: document.getElementById('mb-name').value, 
                 details: document.getElementById('mb-details').value
             };
 
-            // [新增] 處理圖片壓縮
             if (fileInput.files.length > 0) {
                 try {
                     const base64Img = await compressImage(fileInput.files[0]);
@@ -1184,17 +1224,17 @@
 
             try { 
                 if(id) {
-                    await updateDoc(uiApp.getDocRef('mustbuy', id), data);
+                    await updateDoc(uiApp.getDocRef('mustbuy', id), data); // [Fix] Use uiApp.getDocRef
                 } else {
                     data.checked = false;
                     data.createdAt = serverTimestamp();
-                    await addDoc(uiApp.getCol('mustbuy'), data); 
+                    await addDoc(uiApp.getCol('mustbuy'), data); // [Fix] Use uiApp.getCol
                 }
                 e.target.reset(); 
                 document.getElementById('dialog-mustbuy').close(); 
             } catch(e) { console.error(e); uiApp.showCustomAlert("儲存失敗"); } 
         },
-        async updateRate() { try { const res=await fetch('https://api.exchangerate-api.com/v4/latest/JPY'); const d=await res.json(); currentRate=d.rates.TWD; } catch(e){} }
+        async updateRate() { try { const res=await fetch('https://api.exchangerate-api.com/v4/latest/JPY'); const d=await res.json(); currentRate=d.rates.TWD; uiApp.updateCalc(); } catch(e){} } // [Fix] Use uiApp.updateCalc
     };
     
     window.app = uiApp;
@@ -1205,9 +1245,7 @@
             if(view !== 'view-home') document.getElementById('fab-calc').style.display = 'flex'; 
         });
         
-        // [SECURE] Enhanced Auth Logic with fallback
         const initAuth = async () => {
-            // Remove check for __initial_auth_token since it's not available in offline files
             await signInAnonymously(auth);
         };
         initAuth().catch(console.error);
@@ -1215,7 +1253,6 @@
         onAuthStateChanged(auth, (user) => {
             if (user) { uiApp.init(user); } 
             else { 
-                // Fallback handled by initAuth, but good to have listener
             }
         });
     });
